@@ -1,176 +1,439 @@
-// src/modules/crm/components/LeadListWidget.tsx
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useLeads, useUpdateLeadStatus } from '../hooks/useLeads'
-import { LeadStatusBadge } from './LeadStatusBadge'
-import { AccessDenied } from './AccessDenied'
-import { LeadListSkeleton } from './LeadListSkeleton'
-import { LeadStatusFilter, Lead } from '../types'
-import { cn } from '@/lib/utils'
-import { Users, DollarSign, RefreshCw } from 'lucide-react'
+/**
+ * Lead List Widget
+ * 
+ * V1.1 Phase 2: Live Widget Data
+ * 
+ * A fully functional widget that displays CRM leads with:
+ * - Real-time data fetching via TanStack Query
+ * - Status updates with optimistic UI
+ * - Error handling and access denied states
+ * - Loading skeletons
+ * - Refresh capability
+ */
 
-import { useWorkspace } from '@/modules/core/hooks/useWorkspace'
-import { BaseWidgetProps } from '@/modules/editor/registry'
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { useLeads, useUpdateLeadStatus, useRefreshLeads, useSeedSampleLeads } from '../hooks/useLeads';
+import { WidgetErrorBoundary } from '@/modules/editor/components/WidgetErrorBoundary';
+import { AccessDeniedState } from '@/modules/editor/components/AccessDeniedState';
+import { LeadListSkeleton } from '@/modules/editor/components/WidgetSkeleton';
+import {
+    LEAD_STATUS_CONFIG,
+    LEAD_STATUS_ORDER,
+    type Lead,
+    type LeadStatus,
+    type LeadListWidgetConfig
+} from '../types';
+import { cn } from '@/lib/utils';
 
-// Status cycle for click-to-change functionality
-const statusCycle: Exclude<LeadStatusFilter, 'all'>[] = ['new', 'contacted', 'qualified', 'lost']
+// ============================================================
+// Props Interface
+// ============================================================
 
-function getNextStatus(current: string): Exclude<LeadStatusFilter, 'all'> {
-    // Lead status from DB might be lowercase or something else, but we mapped it in LeadStatusFilter
-    const status = current.toLowerCase() as Exclude<LeadStatusFilter, 'all'>
-    const currentIndex = statusCycle.indexOf(status)
-    return statusCycle[(currentIndex + 1) % statusCycle.length]
+interface LeadListWidgetProps {
+    config?: LeadListWidgetConfig;
+    className?: string;
 }
 
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(value)
-}
+// ============================================================
+// Main Widget Component
+// ============================================================
 
-export function LeadListWidget({
-    workspaceId: propsWorkspaceId,
-    config,
-    readOnly = false
-}: BaseWidgetProps & { workspaceId?: string }) {
-    const { workspaceId: contextWorkspaceId } = useWorkspace()
-    const workspaceId = propsWorkspaceId || contextWorkspaceId
+export function LeadListWidget({ config = {}, className }: LeadListWidgetProps) {
+    const {
+        title = 'CRM Leads',
+        showValue = true,
+        showCompany = true,
+        filterStatus,
+        maxItems = 10,
+    } = config;
 
-    const filterStatus = (config?.filterStatus as LeadStatusFilter) || 'all'
-    const limit = (config?.limit as number) || 10
+    // Fetch leads with optional status filter
+    const {
+        data,
+        isLoading,
+        isError,
+        error,
+        isFetching,
+    } = useLeads({
+        filters: filterStatus ? { status: filterStatus } : undefined,
+        limit: maxItems,
+        orderBy: 'updated_at',
+        orderDirection: 'desc',
+    });
 
-    const { data: leads, isLoading, error, refetch, isRefetching } = useLeads(workspaceId || '', filterStatus)
-    const updateStatus = useUpdateLeadStatus()
-    const [updatingLeadId, setUpdatingLeadId] = useState<string | null>(null)
+    const { refresh } = useRefreshLeads();
+    const seedMutation = useSeedSampleLeads();
 
-    if (!workspaceId) {
-        return (
-            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                    Workspace context is missing.
-                </p>
-            </div>
-        )
-    }
+    // Handle seed sample data
+    const handleSeedData = async () => {
+        try {
+            await seedMutation.mutateAsync();
+            toast.success('Sample leads created!');
+        } catch (err) {
+            toast.error('Failed to create sample leads');
+        }
+    };
 
-    // Handle permission errors with Access Denied UI
-    if (error) {
-        const errorWithCode = error as Error & { code?: string }
+    // Check for access denied (RLS failure)
+    if (isError) {
+        const errorMessage = error?.message || 'Unknown error';
 
-        if (errorWithCode.code === 'FORBIDDEN' || errorWithCode.code === 'UNAUTHORIZED') {
-            return <AccessDenied message={error.message} />
+        if (errorMessage.includes('Access denied') || errorMessage.includes('FORBIDDEN')) {
+            return (
+                <AccessDeniedState
+                    widgetType="CRM Leads"
+                    title="CRM Access Restricted"
+                    message="You don't have permission to view CRM leads in this workspace."
+                />
+            );
         }
 
-        // Generic error state
+        // Other errors - show in error boundary style
         return (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-600 dark:text-red-400">
-                    Failed to load leads: {error.message}
-                </p>
-                <button
-                    onClick={() => refetch()}
-                    className="mt-2 text-xs text-red-700 dark:text-red-300 underline hover:no-underline"
-                >
-                    Try again
-                </button>
+            <div className={cn('w-full', className)}>
+                <WidgetHeader
+                    title={title}
+                    isRefreshing={false}
+                    onRefresh={refresh}
+                />
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                        Failed to load leads: {errorMessage}
+                    </p>
+                    <button
+                        onClick={refresh}
+                        className="mt-2 text-sm text-red-700 dark:text-red-300 hover:underline"
+                    >
+                        Try again
+                    </button>
+                </div>
             </div>
-        )
+        );
     }
 
     // Loading state
     if (isLoading) {
-        return <LeadListSkeleton />
+        return <LeadListSkeleton />;
     }
 
-    const handleStatusClick = async (lead: Lead) => {
-        if (updatingLeadId || readOnly) return // Prevent concurrent updates or read-only interaction
-
-        const newStatus = getNextStatus(lead.status)
-        setUpdatingLeadId(lead.id)
-
-        try {
-            await updateStatus.mutateAsync({ leadId: lead.id, newStatus })
-        } catch (err) {
-            console.error('Failed to update lead status:', err)
-        } finally {
-            setUpdatingLeadId(null)
-        }
-    }
+    const leads = data?.data || [];
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        CRM Leads
-                    </span>
-                    {filterStatus !== 'all' && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                            ({filterStatus})
-                        </span>
-                    )}
-                </div>
-                <button
-                    onClick={() => refetch()}
-                    disabled={isRefetching}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                    title="Refresh"
-                >
-                    <RefreshCw className={cn('w-4 h-4 text-gray-500', isRefetching && 'animate-spin')} />
-                </button>
-            </div>
+        <WidgetErrorBoundary widgetType="CRM Leads">
+            <div className={cn('w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden', className)}>
+                {/* Header */}
+                <WidgetHeader
+                    title={title}
+                    count={data?.count}
+                    isRefreshing={isFetching && !isLoading}
+                    onRefresh={refresh}
+                />
 
-            {/* Lead List */}
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {leads && leads.length > 0 ? (
-                    leads.slice(0, limit).map((lead) => (
-                        <div
-                            key={lead.id}
-                            className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                        >
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                    {lead.first_name} {lead.last_name}
-                                </p>
-                                {lead.email && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                        {lead.email}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-3 ml-4">
-                                <LeadStatusBadge
-                                    status={lead.status.toLowerCase() as Exclude<LeadStatusFilter, 'all'>}
-                                    onClick={!readOnly ? () => handleStatusClick(lead) : undefined}
-                                    isLoading={updatingLeadId === lead.id}
-                                />
-                                {/* Value field not present in current schema */}
-                            </div>
-                        </div>
-                    ))
+                {/* Content */}
+                {leads.length === 0 ? (
+                    <EmptyState onSeedData={handleSeedData} isSeeding={seedMutation.isPending} />
                 ) : (
-                    <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                        No leads found
-                    </div>
+                    <LeadTable
+                        leads={leads}
+                        showValue={showValue}
+                        showCompany={showCompany}
+                    />
+                )}
+            </div>
+        </WidgetErrorBoundary>
+    );
+}
+
+// ============================================================
+// Sub-Components
+// ============================================================
+
+interface WidgetHeaderProps {
+    title: string;
+    count?: number;
+    isRefreshing: boolean;
+    onRefresh: () => void;
+}
+
+function WidgetHeader({ title, count, isRefreshing, onRefresh }: WidgetHeaderProps) {
+    return (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+                {/* Icon */}
+                <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded flex items-center justify-center">
+                    <svg
+                        className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                        />
+                    </svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                    {title}
+                </h3>
+                {count !== undefined && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                        ({count})
+                    </span>
                 )}
             </div>
 
-            {/* Footer */}
-            {leads && leads.length > limit && (
-                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                        Showing {limit} of {leads.length} leads
-                    </p>
-                </div>
-            )}
+            {/* Refresh Button */}
+            <button
+                type="button"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className={cn(
+                    'p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
+                    isRefreshing && 'opacity-50 cursor-not-allowed'
+                )}
+                title="Refresh leads"
+            >
+                <svg
+                    className={cn('w-4 h-4 text-gray-500 dark:text-gray-400', isRefreshing && 'animate-spin')}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                </svg>
+            </button>
         </div>
-    )
+    );
 }
 
-export default LeadListWidget
+interface EmptyStateProps {
+    onSeedData: () => void;
+    isSeeding: boolean;
+}
+
+function EmptyState({ onSeedData, isSeeding }: EmptyStateProps) {
+    return (
+        <div className="p-8 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                    className="w-6 h-6 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                    />
+                </svg>
+            </div>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                No leads yet
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Get started by adding your first lead or loading sample data.
+            </p>
+            <button
+                type="button"
+                onClick={onSeedData}
+                disabled={isSeeding}
+                className={cn(
+                    'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors',
+                    isSeeding && 'opacity-50 cursor-not-allowed'
+                )}
+            >
+                {isSeeding ? 'Creating...' : 'Load Sample Leads'}
+            </button>
+        </div>
+    );
+}
+
+interface LeadTableProps {
+    leads: Lead[];
+    showValue: boolean;
+    showCompany: boolean;
+}
+
+function LeadTable({ leads, showValue, showCompany }: LeadTableProps) {
+    return (
+        <div className="overflow-x-auto">
+            <table className="w-full">
+                <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Name
+                        </th>
+                        {showCompany && (
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Company
+                            </th>
+                        )}
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Status
+                        </th>
+                        {showValue && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Value
+                            </th>
+                        )}
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {leads.map((lead) => (
+                        <LeadRow
+                            key={lead.id}
+                            lead={lead}
+                            showValue={showValue}
+                            showCompany={showCompany}
+                        />
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+interface LeadRowProps {
+    lead: Lead;
+    showValue: boolean;
+    showCompany: boolean;
+}
+
+function LeadRow({ lead, showValue, showCompany }: LeadRowProps) {
+    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+    const updateStatusMutation = useUpdateLeadStatus();
+
+    const statusConfig = LEAD_STATUS_CONFIG[lead.status];
+
+    const handleStatusChange = async (newStatus: LeadStatus) => {
+        setIsStatusMenuOpen(false);
+
+        if (newStatus === lead.status) return;
+
+        try {
+            await updateStatusMutation.mutateAsync({
+                leadId: lead.id,
+                status: newStatus,
+            });
+            toast.success(`Status updated to ${LEAD_STATUS_CONFIG[newStatus].label}`);
+        } catch (err) {
+            toast.error('Failed to update status');
+        }
+    };
+
+    // Get initials for avatar
+    const initials = lead.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+    return (
+        <tr className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+            {/* Name & Email */}
+            <td className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                            {initials}
+                        </span>
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {lead.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {lead.email}
+                        </p>
+                    </div>
+                </div>
+            </td>
+
+            {/* Company */}
+            {showCompany && (
+                <td className="px-4 py-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                        {lead.company || '—'}
+                    </p>
+                </td>
+            )}
+
+            {/* Status (Clickable) */}
+            <td className="px-4 py-3">
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                        disabled={updateStatusMutation.isPending}
+                        className={cn(
+                            'inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full transition-opacity',
+                            statusConfig.color,
+                            statusConfig.bgColor,
+                            updateStatusMutation.isPending && 'opacity-50'
+                        )}
+                    >
+                        {statusConfig.label}
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {/* Status Dropdown */}
+                    {isStatusMenuOpen && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setIsStatusMenuOpen(false)}
+                            />
+                            <div className="absolute left-0 top-full mt-1 z-20 w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1">
+                                {LEAD_STATUS_ORDER.map((status) => {
+                                    const config = LEAD_STATUS_CONFIG[status];
+                                    return (
+                                        <button
+                                            key={status}
+                                            type="button"
+                                            onClick={() => handleStatusChange(status)}
+                                            className={cn(
+                                                'w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
+                                                status === lead.status && 'bg-gray-50 dark:bg-gray-700'
+                                            )}
+                                        >
+                                            <span className={cn('inline-block w-2 h-2 rounded-full mr-2', config.bgColor)} />
+                                            {config.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
+                </div>
+            </td>
+
+            {/* Value */}
+            {showValue && (
+                <td className="px-4 py-3 text-right">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        ${lead.value.toLocaleString()}
+                    </p>
+                </td>
+            )}
+        </tr>
+    );
+}
+
+// Export default for registry compatibility
+export default LeadListWidget;

@@ -1,5 +1,17 @@
-// src/modules/crm/actions/index.ts
-export { getLeads } from './getLeads'
-export { updateLeadStatus } from './updateLead'
-export type { GetLeadsResponse } from '../types'
-export type { UpdateLeadResponse } from './updateLead'
+/**
+ * CRM Actions - Public API
+ * 
+ * V1.1 Phase 2: Live Widget Data
+ */
+
+export {
+    getLeads,
+    getLead,
+    createLead,
+    updateLead,
+    updateLeadStatus,
+    deleteLead,
+    seedSampleLeads,
+    getLeadStats,
+} from './leadActions';
+

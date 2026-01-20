@@ -1,5 +1,115 @@
 # Project Log: Command Center ERP
 
+---
+
+## 2026-01-20: V1.1 Phase 2 - Live Widget Data Complete
+
+### Accomplishments
+- **CRM Types Created:** Complete type definitions for leads with status enums and configurations
+- **Server Actions Implemented:**
+  - `getLeads` - Fetch leads with filtering and pagination
+  - `getLead` - Fetch single lead by ID
+  - `createLead` - Create new lead with validation
+  - `updateLead` - Update lead fields
+  - `updateLeadStatus` - Optimized status-only updates
+  - `deleteLead` - Delete lead with RLS check
+  - `seedSampleLeads` - Populate workspace with demo data
+  - `getLeadStats` - Dashboard statistics
+- **TanStack Query Hooks Created:**
+  - `useLeads` - Fetch leads with caching
+  - `useLead` - Fetch single lead
+  - `useLeadStats` - Fetch statistics
+  - `useCreateLead` - Create mutation
+  - `useUpdateLead` - Update mutation with optimistic UI
+  - `useUpdateLeadStatus` - Status mutation with optimistic UI
+  - `useDeleteLead` - Delete mutation with optimistic removal
+  - `useRefreshLeads` - Manual query invalidation
+- **Error Handling Components:**
+  - `WidgetErrorBoundary` - Isolate widget crashes
+  - `AccessDeniedState` - Graceful RLS denial display
+  - `BlurredAccessDenied` - Blurred content with overlay
+- **Loading Components:**
+  - `WidgetSkeleton` - Generic widget loader
+  - `LeadListSkeleton` - Lead-specific skeleton
+  - `ChartSkeleton` - Chart widget skeleton
+  - `StatsSkeleton` - Stats grid skeleton
+- **LeadListWidget Enhanced:**
+  - Real data fetching via TanStack Query
+  - Click-to-update status with dropdown
+  - Optimistic updates for instant feedback
+  - Error boundary integration
+  - Access denied handling
+  - Refresh button
+  - Empty state with seed data option
+- **Widget Registry Updated:**
+  - Real LeadListWidget integrated
+  - Widget metadata for future picker UI
+  - Helper functions for widget resolution
+
+### Architecture Highlights
+- **TanStack Query Caching:** 30-second stale time, 5-minute cache
+- **Optimistic Updates:** Status changes reflect immediately, rollback on error
+- **Error Isolation:** Widget crashes don't affect document or other widgets
+- **RLS Handling:** Empty results distinguished from access denied via error codes
+- **Query Keys:** Structured array-based keys for precise cache invalidation
+
+### Database Additions
+- `00006_crm_seed_data.sql` migration with:
+  - `crm_leads` table with proper schema
+  - RLS policies for CRUD operations
+  - `seed_sample_leads()` function for demo data
+  - Indexes on workspace_id, status, value
+
+### Files Created/Modified
+```
+src/modules/crm/
+├── types/index.ts          (NEW)
+├── hooks/
+│   ├── useLeads.ts         (NEW)
+│   └── index.ts            (NEW)
+├── actions/
+│   ├── leadActions.ts      (NEW)
+│   └── index.ts            (NEW)
+├── components/
+│   ├── LeadListWidget.tsx  (ENHANCED)
+│   └── index.ts            (NEW)
+└── index.ts                (UPDATED)
+
+src/modules/editor/
+├── components/
+│   ├── WidgetErrorBoundary.tsx  (NEW)
+│   ├── AccessDeniedState.tsx    (NEW)
+│   ├── WidgetSkeleton.tsx       (NEW)
+│   ├── PlaceholderWidget.tsx    (NEW)
+│   └── index.ts                 (NEW)
+└── registry.tsx                 (UPDATED)
+
+src/app/(dashboard)/widgets/page.tsx  (NEW)
+supabase/migrations/00006_crm_seed_data.sql  (NEW)
+```
+
+### V1.1 Phase 2 Acceptance Criteria
+- [x] CRM widget displays real leads from database
+- [x] Click lead status updates database
+- [x] Optimistic UI shows immediate feedback
+- [x] Error boundary isolates widget crashes
+- [x] Access denied shows graceful state
+- [x] Loading skeleton prevents layout shift
+- [x] Refresh button invalidates cache
+- [x] Empty state allows seeding demo data
+
+### Known Limitations (V1.1 Phase 2)
+1. Lead creation UI not implemented (only via seed function)
+2. Lead deletion UI not implemented
+3. Kanban view is placeholder (uses list view)
+4. No real-time updates (requires polling or subscriptions)
+
+### Next Steps (V1.1 Phase 3)
+1. Implement widget insertion via slash commands
+2. Create custom BlockNote schema for widgets
+3. Build widget picker modal
+4. Add widget configuration panel
+
 ## 2026-01-20: Project Initialization & Migration
 
 ### Accomplishments
