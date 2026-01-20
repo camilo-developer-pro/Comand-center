@@ -47,9 +47,9 @@ This guide walks you through setting up the Supabase database for Command Center
 2. Navigate to **SQL Editor**
 3. Click **New Query**
 4. Copy the entire contents of `supabase/migrations/00001_initial_schema.sql`
-5. Paste into the SQL editor
-6. Click **Run** (or press Ctrl+Enter)
-7. Verify success: You should see "Success. No rows returned"
+5. Paste into the SQL editor and **Run**.
+6. Repeat for `00002_performance_indexes.sql`, `00003_benchmark_function.sql`, and `00004_auth_triggers.sql`.
+7. Verify success: You should see "Success. No rows returned" after each operation.
 
 ### Option B: Using Supabase CLI (Recommended for production)
 
@@ -131,7 +131,11 @@ After completing the database setup:
 
 1. **Generate TypeScript Types**:
    ```bash
-   npx supabase gen types typescript --project-id your-project-ref > src/types/database.types.ts
+   npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
+   ```
+   *Alternative for linked project:*
+   ```bash
+   npx supabase gen types typescript --project-id your-project-ref > src/lib/supabase/database.types.ts
    ```
 
 2. **Create Supabase Client**: Set up the Supabase client in `src/lib/supabase/`

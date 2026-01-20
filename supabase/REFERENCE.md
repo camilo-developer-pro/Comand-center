@@ -84,7 +84,7 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 
 # Generate types
-npx supabase gen types typescript --project-id YOUR_PROJECT_REF > src/types/database.types.ts
+npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
 ```
 
 ## Environment Variables
@@ -95,6 +95,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...
 ```
 
 ## Files
-- Migration: `supabase/migrations/00001_initial_schema.sql`
+- Migrations: 
+  - `supabase/migrations/00001_initial_schema.sql` (Core)
+  - `supabase/migrations/00002_performance_indexes.sql` (Performance)
+  - `supabase/migrations/00003_benchmark_function.sql` (Benchmarks)
+  - `supabase/migrations/00004_auth_triggers.sql` (Auth Triggers)
+  - `supabase/migrations/00005_dev_seed_data.sql` (Dev Data)
 - Setup Guide: `supabase/SETUP.md`
 - Env Template: `.env.local.example`

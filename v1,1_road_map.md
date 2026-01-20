@@ -1,3 +1,4 @@
+# version 1.0 roadmap
 The Strategic Roadmap (Weeks 1-8)  
 This timeline is aggressive but realistic, focused on the "Strong Skeleton" methodology. We build the hardest parts (Architecture, Security, Persistence) first.
 
@@ -173,3 +174,138 @@ Query the text generated column using the array overlap operator (&&) or contain
 Task 2: The Index. Write the SQL to index this generated column for maximum read performance (B-Tree or GIN on the array).
 
 Task 3: Explanation. Briefly explain to the junior devs why querying this generated column is faster than documents.content \-\>\> 'type' and how it bypasses the TOAST mechanism."
+
+# V1.1 Phase Breakdown
+
+Phase 1: Authentication & User Flow (Week 1-2)
+Objective: Complete the authentication system so real users can sign up, log in, and access their workspaces.
+TaskDescriptionPriority1.1Implement Supabase Auth UI (login/register forms)✅ Done1.2Create auth callback route for OAuth/Magic Link✅ Done1.3Implement logout functionality✅ Done1.4Build workspace creation flow (post-signup)✅ Done1.5Implement auth middleware for protected routes✅ Done1.6Add user profile dropdown in header✅ Done
+Deliverables:
+
+/app/(auth)/login/page.tsx - Full login form
+/app/(auth)/register/page.tsx - Registration with workspace creation
+/app/(auth)/callback/route.ts - OAuth callback handler
+/src/modules/core/auth/ - Auth utilities and hooks
+
+
+Phase 2: Live Widget Data (Week 2-3)
+Objective: Transform stub widgets into fully functional components that fetch and mutate real data.
+TaskDescriptionPriority2.1Implement CRM Lead List with TanStack Query🔴 Critical2.2Add lead status mutation (click to update)🔴 Critical2.3Implement error boundary for widget failures🔴 Critical2.4Add "Access Denied" state for RLS failures🔴 Critical2.5Create loading skeleton for widget data🟡 High2.6Add widget refresh button🟢 Medium
+Deliverables:
+
+Fully functional LeadListWidget with real data
+useLeads hook with TanStack Query
+updateLeadStatus Server Action
+Widget error boundary component
+
+
+Phase 3: Widget Insertion UX (Week 3-4)
+Objective: Enable users to insert widgets via slash commands and a visual block menu.
+TaskDescriptionPriority3.1Define custom BlockNote schema for widget blocks🔴 Critical3.2Create widget insertion slash command (/widget)🔴 Critical3.3Build widget picker modal/dropdown🔴 Critical3.4Implement widget configuration panel🟡 High3.5Add drag-and-drop reordering for widgets🟢 Medium3.6Create widget placeholder during loading🟡 High
+Deliverables:
+
+Custom BlockNote schema (widgetBlock)
+Slash command handler for /leads, /chart, etc.
+Widget picker UI component
+Widget configuration sidebar
+
+
+Phase 4: Lazy Hydration (Week 4-5)
+Objective: Implement "lazy hydration" so widgets only fetch data when scrolled into view.
+TaskDescriptionPriority4.1Create useIntersectionObserver hook🔴 Critical4.2Wrap widgets in lazy hydration boundary🔴 Critical4.3Implement placeholder skeleton until visible🔴 Critical4.4Add data prefetching on hover (optional)🟢 Medium4.5Benchmark 50-widget document load time🟡 High
+Deliverables:
+
+LazyHydrationBoundary component
+useIntersectionObserver hook
+Performance benchmark results
+Optimized widget wrapper
+
+
+Phase 5: Navigation & Dashboard (Week 5-6)
+Objective: Build the complete navigation system and workspace dashboard.
+TaskDescriptionPriority5.1Implement dynamic sidebar with document list🔴 Critical5.2Add document creation from sidebar🔴 Critical5.3Build workspace dashboard with widget stats🟡 High5.4Implement document search (full-text)🟡 High5.5Add recent documents section🟢 Medium5.6Create workspace settings page🟢 Medium
+Deliverables:
+
+Dynamic sidebar component
+Dashboard page with analytics
+Full-text search using search_vector
+Settings page skeleton
+
+
+Phase 6: Optimistic UI & Polish (Week 6-7)
+Objective: Add optimistic updates and visual polish for production readiness.
+TaskDescriptionPriority6.1Implement optimistic UI for document title🟡 High6.2Add optimistic UI for lead status changes🟡 High6.3Implement toast notifications (sonner)🟡 High6.4Add keyboard shortcuts (Cmd+S, Cmd+K)🟢 Medium6.5Implement dark mode toggle🟢 Medium6.6Add empty states for lists🟢 Medium
+Deliverables:
+
+Optimistic mutation patterns
+Toast notification system
+Keyboard shortcut handler
+Dark mode implementation
+
+
+V1.1 Success Criteria
+CriteriaMetricTargetAuth FlowUser can sign up → create workspace → create document✅ CompleteWidget DataCRM widget displays real leads from database✅ CompleteWidget MutationClick lead status → database updated → UI reflects✅ CompleteWidget InsertionType /leads → widget inserted into document✅ CompleteLazy Hydration50-widget document loads in <2 seconds✅ <2sSearchFull-text search returns relevant documents✅ CompleteSecurityUnauthorized widget access shows "Access Denied"✅ Complete
+
+Technical Architecture Additions
+New Dependencies
+json{
+  "@supabase/auth-ui-react": "^0.4.0",
+  "@supabase/auth-ui-shared": "^0.1.0",
+  "sonner": "^1.0.0",
+  "cmdk": "^0.2.0"
+}
+```
+
+### New Directory Structure
+```
+/src
+├── /modules
+│   ├── /core
+│   │   ├── /auth
+│   │   │   ├── components/
+│   │   │   │   ├── LoginForm.tsx
+│   │   │   │   ├── RegisterForm.tsx
+│   │   │   │   └── UserMenu.tsx
+│   │   │   ├── hooks/
+│   │   │   │   └── useAuth.ts
+│   │   │   └── actions/
+│   │   │       └── authActions.ts
+│   │   └── /workspace
+│   │       ├── components/
+│   │       │   ├── WorkspaceSwitcher.tsx
+│   │       │   └── WorkspaceSettings.tsx
+│   │       └── actions/
+│   │           └── workspaceActions.ts
+│   ├── /editor
+│   │   ├── /blocks           # NEW: Custom BlockNote blocks
+│   │   │   ├── WidgetBlock.tsx
+│   │   │   └── widgetBlockSchema.ts
+│   │   ├── /components
+│   │   │   ├── SlashMenu.tsx      # NEW
+│   │   │   ├── WidgetPicker.tsx   # NEW
+│   │   │   └── LazyHydrationBoundary.tsx  # NEW
+│   │   └── /hooks
+│   │       └── useIntersectionObserver.ts  # NEW
+│   └── /crm
+│       ├── /components
+│       │   └── LeadListWidget.tsx  # ENHANCED
+│       ├── /hooks
+│       │   └── useLeads.ts         # NEW
+│       └── /actions
+│           └── leadActions.ts      # ENHANCED
+└── /components
+    └── /layout
+        ├── Sidebar.tsx         # ENHANCED
+        ├── Header.tsx          # ENHANCED
+        └── CommandMenu.tsx     # NEW (Cmd+K)
+```
+
+### Database Migrations (V1.1)
+```
+/supabase/migrations/
+├── 00001_initial_schema.sql      # V1.0
+├── 00002_performance_indexes.sql # V1.0
+├── 00003_benchmark_function.sql  # V1.0
+├── 00004_auth_triggers.sql       # V1.1 - Auth event handlers
+├── 00005_workspace_defaults.sql  # V1.1 - Default workspace data
+└── 00006_activity_log.sql        # V1.1 - User activity tracking

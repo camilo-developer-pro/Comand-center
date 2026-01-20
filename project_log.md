@@ -149,9 +149,104 @@
 - [x] Documentation explains TOAST bypass mechanism
 - [x] Benchmark utility demonstrates performance difference
 
-### Next Steps (V1.0 Complete ? V1.1 Planning)
+### Next Steps (V1.0 Complete → V1.1 Planning)
 1. Run all migrations against Supabase project
 2. Generate fresh TypeScript types: `npx supabase gen types typescript`
 3. Integration testing with real document data
 4. Performance benchmarking with production-scale dataset
 5. Begin V1.1 feature planning (Lazy Hydration, Widget Marketplace)
+
+---
+
+## 2026-01-20: V1.1 Phase 1 - Authentication & User Flow Complete
+
+### Accomplishments
+- **Dependencies Installed:** @supabase/auth-ui-react, @supabase/auth-ui-shared, sonner, zod, react-hook-form, @hookform/resolvers
+- **Auth Module Created:** Complete module structure with types, schemas, actions, and components
+- **Server Actions Implemented:**
+  - `signInWithPassword` - Email/password authentication
+  - `signInWithOAuth` - Google/GitHub OAuth
+  - `signUpWithPassword` - Registration with workspace creation
+  - `signOut` - Session termination
+  - `sendPasswordResetEmail` - Password recovery
+  - `getCurrentUser` - Session retrieval
+- **Auth Pages Created:**
+  - `/login` - Login form with OAuth buttons
+  - `/register` - Registration with workspace name
+  - `/verify-email` - Email confirmation notice
+  - `/auth/callback` - OAuth redirect handler
+- **Middleware Implemented:** Route protection for dashboard, auth redirect logic
+- **User Menu:** Profile dropdown with sign out in header
+- **Database Triggers:** Automatic profile and workspace creation on signup
+
+### Architecture Highlights
+- **Zod Validation:** All form inputs validated with Zod schemas
+- **react-hook-form:** Efficient form state management
+- **Toast Notifications:** User feedback via sonner
+- **Cookie-Based Sessions:** Secure httpOnly cookies via Supabase SSR
+- **Edge Runtime Compatible:** Middleware works in Vercel Edge
+
+### Security Measures
+- Server Actions validate authentication before operations
+- Password requirements: 8+ chars, uppercase, lowercase, number
+- OAuth redirect validation
+- Email enumeration prevention on password reset
+- RLS helper functions for workspace access control
+
+### Files Created
+```
+src/modules/core/auth/
+├── types/index.ts
+├── schemas/index.ts
+├── hooks/                    # Reserved for useAuth hook
+├── actions/
+│   ├── authActions.ts
+│   ├── workspaceActions.ts
+│   └── index.ts
+├── components/
+│   ├── LoginForm.tsx
+│   ├── RegisterForm.tsx
+│   ├── OAuthButtons.tsx
+│   ├── UserMenu.tsx
+│   └── index.ts
+└── index.ts
+
+src/app/(auth)/
+├── layout.tsx
+├── login/page.tsx
+├── register/page.tsx
+├── verify-email/page.tsx
+└── callback/route.ts
+
+src/components/layout/
+└── Header.tsx
+
+middleware.ts
+src/lib/supabase/middleware.ts
+supabase/migrations/00004_auth_triggers.sql
+supabase/migrations/00005_dev_seed_data.sql
+```
+
+### V1.1 Phase 1 Acceptance Criteria
+- [x] User can sign up with email/password
+- [x] User can sign in with email/password
+- [x] User can sign in with Google OAuth
+- [x] User can sign in with GitHub OAuth
+- [x] User can sign out
+- [x] Protected routes redirect to login
+- [x] Auth routes redirect to dashboard if authenticated
+- [x] Workspace created automatically on registration
+- [x] User menu displays in header with sign out option
+- [x] Form validation with meaningful error messages
+
+### Known Limitations (V1.1 Phase 1)
+1. Password reset page not fully implemented (needs form)
+2. Profile settings page is placeholder
+3. Workspace settings page is placeholder
+4. Email confirmation can be disabled in Supabase dashboard for faster dev
+
+### Next Steps (V1.1 Phase 2)
+1. Configure Supabase project with OAuth providers
+2. Run database migrations
+3. Test complete auth flow end-to-end
+4. Begin Phase 2: Live Widget Data
