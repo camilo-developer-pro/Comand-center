@@ -1,112 +1,72 @@
-'use client';
+// src/modules/editor/components/Editor.tsx
+'use client'
 
-import { useCallback, useState, useMemo } from 'react';
-import { BlockNoteView } from '@blocknote/mantine';
-import { useCreateBlockNote } from '@blocknote/react';
-import type { Block, BlockNoteEditor } from '@blocknote/core';
-import '@blocknote/mantine/style.css';
+import { useCallback, useState } from 'react'
+import { BlockNoteView } from '@blocknote/mantine'
+import {
+    useCreateBlockNote,
+    SuggestionMenuController,
+} from '@blocknote/react'
+import { PartialBlock } from '@blocknote/core'
+import '@blocknote/mantine/style.css'
+import { useDebounce } from '@/lib/hooks/useDebounce'
+import { saveDocumentContent } from '../actions/documentActions'
+import { customSchema, CustomSchema } from '../schema'
+import { getCustomSlashMenuItems } from './SlashMenuItems'
+import { SaveStatusIndicator } from './SaveStatusIndicator'
 
-import { useDebounce } from '@/lib/hooks/useDebounce';
-import { saveDocumentContent } from '../actions/documentActions';
-import { SaveStatusIndicator } from './SaveStatusIndicator';
-import type { EditorProps, EditorState } from './Editor.types';
+interface EditorProps {
+    documentId: string
+    initialContent?: PartialBlock<any>[]
+    workspaceId: string
+    title: string
+    onSaveStatusChange?: (status: 'saved' | 'saving' | 'unsaved') => void
+}
 
-/**
- * Command Center Editor Component
- * 
- * A rich text editor built on BlockNote that:
- * 1. Renders document content from JSONB
- * 2. Auto-saves changes via debounced Server Action
- * 3. Supports custom widget blocks (via Registry - Phase 3)
- * 
- * @param props - EditorProps including documentId, initialContent, etc.
- */
 export function Editor({
     documentId,
     initialContent,
+    workspaceId,
     title,
-    readOnly = false,
-    onSaveComplete,
-    onContentChange,
+    onSaveStatusChange
 }: EditorProps) {
-    // Editor state management
-    const [editorState, setEditorState] = useState<EditorState>({
-        isSaving: false,
-        lastSaved: null,
-        hasUnsavedChanges: false,
-        error: null,
-    });
+    const [saveError, setSaveError] = useState<string | null>(null);
 
-    // Save function that calls the Server Action
-    const performSave = useCallback(
-        async (content: Block[]) => {
-            setEditorState(prev => ({ ...prev, isSaving: true, error: null }));
-
-            try {
-                const result = await saveDocumentContent({
-                    documentId,
-                    content,
-                });
-
-                if (result.success) {
-                    setEditorState(prev => ({
-                        ...prev,
-                        isSaving: false,
-                        lastSaved: new Date(),
-                        hasUnsavedChanges: false,
-                    }));
-                    onSaveComplete?.(true);
-                } else {
-                    setEditorState(prev => ({
-                        ...prev,
-                        isSaving: false,
-                        error: result.error || 'Failed to save',
-                    }));
-                    onSaveComplete?.(false);
-                }
-            } catch (err) {
-                console.error('[Editor] Save error:', err);
-                setEditorState(prev => ({
-                    ...prev,
-                    isSaving: false,
-                    error: 'Network error - changes not saved',
-                }));
-                onSaveComplete?.(false);
-            }
-        },
-        [documentId, onSaveComplete]
-    );
-
-    // Debounced save (1 second delay)
-    const { debouncedFn: debouncedSave } = useDebounce(performSave, 1000);
-
-    // Handle content changes from BlockNote
-    const handleChange = useCallback(
-        (editor: BlockNoteEditor) => {
-            const content = editor.document as Block[];
-
-            setEditorState(prev => ({ ...prev, hasUnsavedChanges: true }));
-            onContentChange?.(content);
-
-            if (!readOnly) {
-                debouncedSave(content);
-            }
-        },
-        [debouncedSave, onContentChange, readOnly]
-    );
-
-    // Parse initial content safely
-    const parsedInitialContent = useMemo(() => {
-        if (!initialContent || !Array.isArray(initialContent)) {
-            return undefined; // BlockNote will use default empty state
-        }
-        return initialContent;
-    }, [initialContent]);
-
-    // Create the BlockNote editor instance
+    // Create editor with custom schema
     const editor = useCreateBlockNote({
-        initialContent: parsedInitialContent,
-    });
+        schema: customSchema,
+        initialContent: initialContent as any,
+    })
+
+    // Auto-save logic
+    const performSave = useCallback(async (content: any) => {
+        onSaveStatusChange?.('saving')
+        try {
+            const result = await saveDocumentContent({
+                documentId,
+                content,
+            })
+            if (result.success) {
+                onSaveStatusChange?.('saved')
+                setSaveError(null)
+            } else {
+                setSaveError(result.error || 'Failed to save')
+                onSaveStatusChange?.('unsaved')
+            }
+        } catch (error) {
+            console.error('Failed to save document:', error)
+            setSaveError('Network error')
+            onSaveStatusChange?.('unsaved')
+        }
+    }, [documentId, onSaveStatusChange])
+
+    const { debouncedFn: debouncedSave } = useDebounce(performSave, 1000)
+
+    // Handle content changes
+    const handleChange = useCallback(() => {
+        onSaveStatusChange?.('unsaved')
+        debouncedSave(editor.document)
+    }, [editor, debouncedSave, onSaveStatusChange])
 
     return (
         <div className="flex flex-col h-full">
@@ -116,10 +76,10 @@ export function Editor({
                     {title}
                 </h1>
                 <SaveStatusIndicator
-                    isSaving={editorState.isSaving}
-                    lastSaved={editorState.lastSaved}
-                    hasUnsavedChanges={editorState.hasUnsavedChanges}
-                    error={editorState.error}
+                    isSaving={false}
+                    lastSaved={null}
+                    hasUnsavedChanges={false}
+                    error={saveError}
                 />
             </div>
 
@@ -127,20 +87,29 @@ export function Editor({
             <div className="flex-1 overflow-auto bg-white">
                 <div className="max-w-4xl mx-auto py-8 px-4">
                     <BlockNoteView
-                        editor={editor}
-                        editable={!readOnly}
-                        onChange={() => handleChange(editor)}
+                        editor={editor as any}
+                        onChange={handleChange}
+                        slashMenu={false}
                         theme="light"
-                    />
+                    >
+                        <SuggestionMenuController
+                            triggerCharacter="/"
+                            getItems={async (query) => {
+                                const items = getCustomSlashMenuItems(editor as any)
+                                return items.filter(
+                                    (item) =>
+                                        item.title.toLowerCase().includes(query.toLowerCase()) ||
+                                        item.aliases?.some((alias) =>
+                                            alias.toLowerCase().includes(query.toLowerCase())
+                                        )
+                                )
+                            }}
+                        />
+                    </BlockNoteView>
                 </div>
             </div>
-
-            {/* Editor Footer - Error Display */}
-            {editorState.error && (
-                <div className="px-4 py-2 bg-red-50 border-t border-red-200">
-                    <p className="text-sm text-red-600">{editorState.error}</p>
-                </div>
-            )}
         </div>
-    );
+    )
 }
+
+export default Editor

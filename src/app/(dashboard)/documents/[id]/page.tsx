@@ -1,64 +1,68 @@
-import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { EditorWrapper } from '@/modules/editor/components/EditorWrapper';
-import type { Block } from '@blocknote/core';
+// src/app/(dashboard)/documents/[id]/page.tsx
+import { Suspense } from 'react'
+import { notFound, redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { EditorWrapper } from '@/modules/editor/components/EditorWrapper'
+import { WorkspaceProvider } from '@/modules/core/hooks/useWorkspace'
 
 interface DocumentPageProps {
-    params: Promise<{
-        id: string;
-    }>;
+    params: Promise<{ id: string }>
 }
 
-/**
- * Document Editor Page (Server Component)
- * 
- * This is the page shell that:
- * 1. Fetches document data from Supabase
- * 2. Validates user access via RLS
- * 3. Passes initial data to the Client Editor
- */
 export default async function DocumentPage({ params }: DocumentPageProps) {
-    const { id } = await params;
-    const supabase = await createClient();
+    const { id } = await params
+    const supabase = await createClient()
 
-    // Verify authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-        notFound(); // Will redirect via layout
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        redirect('/login')
     }
 
-    // Fetch document (RLS will filter by workspace)
+    // Fetch document with workspace info
     const { data: document, error } = await supabase
         .from('documents')
-        .select('*')
+        .select(`
+      id,
+      title,
+      content,
+      workspace_id,
+      workspaces (
+        id,
+        name
+      )
+    `)
         .eq('id', id)
-        .single();
+        .single()
 
     if (error || !document) {
-        console.error('[DocumentPage] Document not found or access denied:', error);
-        notFound();
+        notFound()
     }
 
-    // Parse content safely
-    const initialContent = document.content as Block[] | null;
+    // Proper cast for workspaces relation
+    const workspaces = document.workspaces as unknown as { id: string; name: string } | null;
 
     return (
-        <div className="h-screen flex flex-col">
-            <EditorWrapper
-                documentId={document.id}
-                initialContent={initialContent}
-                title={document.title}
-                workspaceId={document.workspace_id}
-                readOnly={false}
-            />
-        </div>
-    );
+        <WorkspaceProvider
+            workspaceId={document.workspace_id}
+            workspaceName={workspaces?.name ?? null}
+        >
+            <div className="min-h-screen bg-white dark:bg-gray-950">
+                <main className="h-screen flex flex-col">
+                    <Suspense fallback={<div className="h-96 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />}>
+                        <EditorWrapper
+                            documentId={document.id}
+                            initialContent={document.content as any}
+                            workspaceId={document.workspace_id}
+                            title={document.title}
+                        />
+                    </Suspense>
+                </main>
+            </div>
+        </WorkspaceProvider>
+    )
 }
 
-/**
- * Generate metadata for the document page.
- */
 export async function generateMetadata({ params }: DocumentPageProps) {
     const { id } = await params;
     const supabase = await createClient();
