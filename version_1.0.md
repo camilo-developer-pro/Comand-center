@@ -23,7 +23,7 @@
 │       ├── /actions    \# Server Actions (mutateLeads)  
 │       └── /types      \# Database Types  
 ├── /components         \# SHARED UI (shadcn/ui only)  
-├── /lib                \# SINGLETONS (supabase-browser, utils)  
+├── /lib                \# SINGLETONS (utils, supabase)  
 └── /types              \# GLOBAL TYPES (database.types.ts)
 
 \#\# 2\. Database Schema (Supabase)
