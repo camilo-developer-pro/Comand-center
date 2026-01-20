@@ -1,7 +1,7 @@
 /**
  * Editor Components - Public API
  * 
- * V1.1 Phase 2: Live Widget Data
+ * V1.1 Phase 3: Widget Insertion UX
  */
 
 // Error handling
@@ -19,7 +19,10 @@ export {
 // Placeholder
 export { PlaceholderWidget } from './PlaceholderWidget';
 
-// Editor components (existing)
-export { Editor } from './Editor';
-export { EditorWrapper } from './EditorWrapper';
-export { SaveStatusIndicator } from './SaveStatusIndicator';
+// Widget insertion
+export { WidgetPicker, InlineWidgetPicker } from './WidgetPicker';
+export { WidgetConfigPanel } from './WidgetConfigPanel';
+export { getWidgetSlashMenuItems, getCustomSlashMenuItems, getQuickInsertItems } from './SlashMenuItems';
+
+// Editor
+export { CommandCenterEditor } from './CommandCenterEditor';

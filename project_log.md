@@ -2,6 +2,105 @@
 
 ---
 
+## 2026-01-20: V1.1 Phase 3 - Widget Insertion UX Complete
+
+### Accomplishments
+- **Widget Block Schema Created:**
+  - `types.ts` - Type definitions for widget block props and configs
+  - `widgetBlockSchema.ts` - BlockNote custom block specification
+  - `WidgetBlockComponent.tsx` - React component for rendering widgets in blocks
+- **Widget Insertion Components:**
+  - `WidgetPicker.tsx` - Modal for selecting widget type
+  - `WidgetConfigPanel.tsx` - Slide-out panel for widget configuration
+  - `SlashMenuItems.tsx` - Custom slash menu entries for widgets
+- **Enhanced Editor:**
+  - `CommandCenterEditor.tsx` - Main editor with custom schema and slash menu
+  - Auto-save with debouncing
+  - Save status indicator
+  - Toolbar with Insert Widget button
+- **Editor Hooks:**
+  - `useWidgetSuggestions.ts` - Search and filter widget suggestions
+  - `useDebounce.ts` - Debounce utility hook
+- **Test Page:**
+  - `/editor-test` - Dedicated page for testing widget insertion
+  - Export/log content functionality
+  - Raw JSON preview
+
+### Architecture Highlights
+- **Custom BlockNote Schema:** Extended default schema with `widget` block type
+- **Props-Based Configuration:** Widget config stored in block attributes, not separate tables
+- **Slash Menu Integration:** Widget items appear alongside default BlockNote commands
+- **Error Isolation:** Each widget wrapped in error boundary within block component
+- **Keyboard Navigation:** Widget picker supports arrow keys, enter, escape
+
+### Widget Insertion Flow
+1. User types `/` to open slash menu
+2. User searches for "leads" or "widget"
+3. User selects widget type from menu
+4. Widget block inserted with default config
+5. User hovers over widget to see controls
+6. User clicks gear icon to configure
+7. Config changes saved to block props
+8. Editor auto-saves document
+
+### Files Created/Modified
+```
+src/modules/editor/
+├── blocks/
+│   ├── types.ts                    (NEW)
+│   ├── widgetBlockSchema.ts        (NEW)
+│   ├── WidgetBlockComponent.tsx    (NEW)
+│   └── index.ts                    (NEW)
+├── components/
+│   ├── WidgetPicker.tsx            (NEW)
+│   ├── WidgetConfigPanel.tsx       (NEW)
+│   ├── SlashMenuItems.tsx          (NEW)
+│   ├── CommandCenterEditor.tsx     (NEW)
+│   └── index.ts                    (UPDATED)
+├── hooks/
+│   ├── useWidgetSuggestions.ts     (NEW)
+│   └── index.ts                    (NEW)
+└── registry.tsx                    (UPDATED)
+
+src/lib/hooks/
+├── useDebounce.ts                  (NEW)
+└── index.ts                        (NEW)
+
+src/app/(dashboard)/editor-test/
+├── page.tsx                        (NEW)
+└── EditorTestClient.tsx            (NEW)
+```
+
+### V1.1 Phase 3 Acceptance Criteria
+- [x] Custom BlockNote schema for widget blocks
+- [x] Widget insertion via slash command (/leads, /widget)
+- [x] Widget picker modal with search
+- [x] Widget configuration panel
+- [x] Drag-and-drop reordering (via BlockNote native)
+- [x] Widget placeholder/loading state
+- [x] Widget header with controls on hover
+- [x] Delete widget from block
+
+### Known Limitations (V1.1 Phase 3)
+1. Widget type cannot be changed after insertion (must delete and re-insert)
+2. No undo/redo for widget config changes (only BlockNote native undo)
+3. Widget picker positioned fixed, not relative to cursor
+4. No keyboard shortcut for quick widget insert (only slash command)
+
+### Next Steps (V1.1 Phase 4)
+1. Implement lazy hydration for widgets
+2. Add intersection observer for viewport-based loading
+3. Benchmark 50-widget document performance
+4. Add data prefetching on widget hover
+
+
+
+
+
+
+
+
+
 ## 2026-01-20: V1.1 Phase 2 - Live Widget Data Complete
 
 ### Accomplishments
