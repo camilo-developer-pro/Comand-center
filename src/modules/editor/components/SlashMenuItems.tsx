@@ -13,7 +13,7 @@ import {
     getDefaultReactSlashMenuItems,
 } from '@blocknote/react';
 // @ts-ignore - may not be exported in certain types but exists at runtime
-import { insertOrUpdateBlock } from '@blocknote/core';
+// import { insertOrUpdateBlock } from '@blocknote/core'; // REMOVED due to build error
 import { WIDGET_METADATA, getAvailableWidgets, type WidgetKey } from '../registry';
 import { createWidgetBlockProps } from '../blocks/widgetBlockSchema';
 
@@ -33,18 +33,15 @@ function createWidgetSlashMenuItem(
         subtext: metadata.description,
         onItemClick: (editor: any) => {
             const props = createWidgetBlockProps(widgetKey);
+            const currentBlock = editor.getTextCursorPosition().block;
 
-            if ('insertOrUpdateBlock' in editor) {
-                (editor as any).insertOrUpdateBlock(editor.getTextCursorPosition().block, {
-                    type: 'widget',
-                    props,
-                });
-            } else {
-                insertOrUpdateBlock(editor, {
-                    type: 'widget',
-                    props,
-                });
-            }
+            // Use editor methods directly to avoid import issues.
+            // Replacing the current block (where the slash command was typed)
+            // is the standard behavior.
+            editor.updateBlock(currentBlock, {
+                type: 'widget',
+                props,
+            });
         },
         aliases: [widgetKey, metadata.module, 'widget'],
         group: 'Widgets',
