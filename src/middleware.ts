@@ -1,9 +1,12 @@
-import { createServerClient } from '@supabase/ssr'
+// src/middleware.ts
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-    let supabaseResponse = NextResponse.next({
-        request,
+    let response = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
     })
 
     const supabase = createServerClient(
@@ -11,49 +14,75 @@ export async function middleware(request: NextRequest) {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                getAll() {
-                    return request.cookies.getAll()
+                get(name: string) {
+                    return request.cookies.get(name)?.value
                 },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) =>
-                        request.cookies.set(name, value)
-                    )
-                    supabaseResponse = NextResponse.next({
-                        request,
+                set(name: string, value: string, options: CookieOptions) {
+                    request.cookies.set({
+                        name,
+                        value,
+                        ...options,
                     })
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
-                    )
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    })
+                    response.cookies.set({
+                        name,
+                        value,
+                        ...options,
+                    })
+                },
+                remove(name: string, options: CookieOptions) {
+                    request.cookies.set({
+                        name,
+                        value: '',
+                        ...options,
+                    })
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    })
+                    response.cookies.set({
+                        name,
+                        value: '',
+                        ...options,
+                    })
                 },
             },
         }
     )
 
-    // Refresh session if expired
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
 
     // Protect dashboard routes
-    // Note: dashboard routes are group under (dashboard) layout, 
-    // but they don't necessarily start with /dashboard in the URL if not configured so.
-    // However, the user request specifies starting with /(dashboard) which is likely a placeholder 
-    // for actual protected paths. In Next.js, (dashboard) is a route group.
-    // I will follow the user's exact specification.
-    if (
-        !user &&
-        request.nextUrl.pathname.startsWith('/(dashboard)')
-    ) {
+    if (!session && request.nextUrl.pathname.startsWith('/documents')) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
-    return supabaseResponse
+    // Redirect authenticated users away from auth pages
+    if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/documents'
+        return NextResponse.redirect(url)
+    }
+
+    return response
 }
 
 export const config = {
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        /*
+         * Match all request paths except for the ones starting with:
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * - auth/callback (auth code exchange)
+         */
+        '/((?!_next/static|_next/image|favicon.ico|auth/callback).*)',
     ],
 }

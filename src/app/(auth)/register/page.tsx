@@ -1,6 +1,7 @@
-import { LoginForm } from '@/modules/core/auth/components/LoginForm'
+// src/app/(auth)/register/page.tsx
+import { RegisterForm } from '@/modules/core/auth/components/RegisterForm'
 
-export default function LoginPage() {
+export default function RegisterPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
             <div className="max-w-md w-full">
@@ -9,10 +10,10 @@ export default function LoginPage() {
                         <span className="text-white font-bold text-lg">CC</span>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">Command Center</h1>
-                    <p className="text-gray-600 mt-2">Sign in to your account</p>
+                    <p className="text-gray-600 mt-2">Create your account</p>
                 </div>
 
-                <LoginForm />
+                <RegisterForm />
             </div>
         </div>
     );

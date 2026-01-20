@@ -16,6 +16,7 @@
     "@blocknote/core": "^0.46.1",
     "@blocknote/mantine": "^0.46.1",
     "@blocknote/react": "^0.46.1",
+    "@hookform/resolvers": "^5.2.2",
     "@mantine/core": "^8.3.13",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
@@ -25,7 +26,9 @@
     "next": "16.1.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "tailwind-merge": "^3.4.0"
+    "react-hook-form": "^7.71.1",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { LogoutButton } from '@/modules/core/auth/components/LogoutButton';
 
 interface DashboardLayoutProps {
     children: ReactNode;
@@ -29,7 +30,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
                     </div>
                     <span className="font-semibold text-gray-900">Command Center</span>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1">
                     <a
                         href="/documents"
                         className="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
@@ -42,6 +43,10 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
                     >
                         Settings
                     </a>
+                </div>
+
+                <div className="mt-auto pt-4 border-t border-gray-200">
+                    <LogoutButton />
                 </div>
             </nav>
 
