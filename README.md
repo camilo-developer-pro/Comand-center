@@ -1,36 +1,163 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Command Center ERP - V1.0
 
-## Getting Started
+A modular "Command Center" ERP that fuses the narrative flexibility of a document editor with the transactional power of a business dashboard.
 
-First, run the development server:
+## 🎯 Project Vision
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Command Center ERP is a **"Browser for Business Logic"** - a composable canvas where users can embed live business widgets (CRM, Finance, HR) directly into smart documents, replacing rigid, siloed ERP interfaces with a malleable, Notion-like experience.
+
+## 🏗️ Architecture
+
+### Tech Stack
+- **Frontend:** Next.js 14 (App Router) + TypeScript (Strict Mode)
+- **Database:** Supabase (PostgreSQL) with Row Level Security
+- **Editor:** BlockNote (TipTap/ProseMirror)
+- **State:** TanStack Query (React Query)
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Package Manager:** npm
+
+### Directory Structure (Feature-Sliced Design)
+```
+/src
+├── /app                # Next.js App Router (Routing Shells)
+│   ├── /(auth)         # Login/Register Routes
+│   ├── /(dashboard)    # Protected Routes
+│   └── /api            # Edge Functions / Webhooks
+├── /modules            # FEATURE MODULES (Business Logic)
+│   ├── /core           # Auth, Profiles, Workspace Context
+│   ├── /editor         # BlockNote Logic, Registry
+│   └── /crm            # Example Business Domain
+├── /components         # SHARED UI (shadcn/ui only)
+├── /lib                # SINGLETONS (utils, supabase)
+└── /types              # GLOBAL TYPES (database.types.ts)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🗄️ Database Schema
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Hybrid Data Model
+- **Documents** store JSONB content (layout configuration)
+- **Transactional data** lives in separate relational tables
+- **Generated columns** extract metadata from JSONB for efficient querying
+- **RLS** enforces multi-tenant security at the database level
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Core Tables
+- `workspaces` - Multi-tenant root
+- `workspace_members` - User-workspace junction with roles
+- `profiles` - User profile data
+- `documents` - Smart docs with JSONB + generated columns
+- `crm_leads` - Demo transactional data table
 
-## Learn More
+### Key Features
+✅ **Generated Columns** for widget indexing and full-text search  
+✅ **GIN Indexes** on JSONB for high-performance queries  
+✅ **Row Level Security** on all tables  
+✅ **Automated Triggers** for profile creation and timestamps  
+✅ **Dual-Layer Security** (Document access + Widget data access)
 
-To learn more about Next.js, take a look at the following resources:
+## 🚀 Getting Started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prerequisites
+- Node.js 18+
+- Supabase account
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Installation
 
-## Deploy on Vercel
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/camilo-developer-pro/Comand-center.git
+   cd comand-center
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Set up Supabase**
+   - Create a Supabase project at https://supabase.com
+   - Follow the detailed setup guide: [`supabase/SETUP.md`](./supabase/SETUP.md)
+   - Run the migration: `supabase/migrations/00001_initial_schema.sql`
+
+4. **Configure environment**
+   ```bash
+   cp .env.local.example .env.local
+   # Edit .env.local with your Supabase credentials
+   ```
+
+5. **Generate TypeScript types**
+   ```bash
+   npx supabase gen types typescript --project-id YOUR_PROJECT_REF > src/types/database.types.ts
+   ```
+
+6. **Run development server**
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000)
+
+## 📚 Documentation
+
+- **[Setup Guide](./supabase/SETUP.md)** - Complete Supabase setup instructions
+- **[Quick Reference](./supabase/REFERENCE.md)** - Database schema and common queries
+- **[Architecture](./Modular%20ERP%20Command%20Center%20Architecture.md)** - Detailed architectural blueprint
+- **[V1.0 Specification](./version_1.0.md)** - Technical implementation spec
+- **[Project Definition](./project_definition.md)** - Vision and core pillars
+- **[Cursor Rules](./cursorrules.md)** - AI coding assistant guidelines
+
+## 🎯 V1.0 Success Criteria
+
+1. ✅ **Database Schema:** Complete Supabase schema with RLS
+2. ⏳ **Auth:** Secure multi-tenant login (Email/Password + OAuth)
+3. ⏳ **Editor:** Functional rich text editor with slash commands
+4. ⏳ **Registry:** Dynamic widget loading via registry pattern
+5. ⏳ **Persistence:** Documents persist to DB and reload correctly
+6. ⏳ **Security:** User A cannot access User B's documents (RLS verified)
+
+## 🔐 Security Model
+
+### Dual-Layer Authorization
+1. **Document Access (Container):** RLS on `documents` table controls who can view the layout
+2. **Widget Data Access (Content):** RLS on domain tables (e.g., `crm_leads`) controls who can view the data
+
+**Result:** Users can see document layouts but get "Access Denied" for restricted widget data.
+
+## ⚡ Performance Optimizations
+
+- **Generated Columns:** Extract metadata from JSONB at write-time for fast indexed queries
+- **GIN Indexes:** `jsonb_path_ops` for 30-50% smaller, faster indexes
+- **Dynamic Imports:** Lazy-load widgets with `next/dynamic` to reduce bundle size
+- **Client-Side Caching:** TanStack Query for optimistic updates and real-time data
+
+## 🛠️ Development
+
+### Commands
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
+
+### Coding Standards
+- **TypeScript:** Strict mode, no `any` types
+- **Imports:** Explicit imports (no barrel files)
+- **Client/Server:** Clear separation with `'use client'` directive
+- **RLS First:** Security enforced at database level
+
+## 📖 Project Status
+
+**Current Phase:** Database Schema Implementation ✅  
+**Next Phase:** Supabase Client Setup & Authentication Module
+
+See [`project_log.md`](./project_log.md) for detailed progress updates.
+
+## 📝 License
+
+Private - All Rights Reserved
+
+## 👥 Team
+
+- **Architect:** Senior PostgreSQL Database Architect
+- **Developer:** Full-Stack TypeScript Engineer
+- **Project:** Command Center ERP V1.0
