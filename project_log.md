@@ -50,3 +50,59 @@
 3. Generate TypeScript types from schema
 4. Implement Supabase client utilities in `src/lib/supabase/`
 5. Build authentication module in `src/modules/core/auth/`
+
+---
+
+## 2026-01-20: Phase 2 - Editor & Registry Implementation
+
+### Accomplishments
+- **Dependencies Installed:** BlockNote ecosystem (@blocknote/core, @blocknote/react, @blocknote/mantine), TanStack Query, Mantine Core
+- **Core Utilities Created:**
+  - `useDebounce` hook for auto-save functionality
+  - `QueryProvider` for React Query context
+  - Supabase client utilities (browser and server)
+- **Editor Module Implemented:**
+  - `Editor.tsx` - Main BlockNote integration with auto-save
+  - `EditorWrapper.tsx` - Dynamic import wrapper (code splitting)
+  - `SaveStatusIndicator.tsx` - Visual save state feedback
+  - Server Actions for document CRUD operations
+- **Widget Registry Pattern:**
+  - `registry.tsx` with TypeScript-safe `WidgetKey` type
+  - Dynamic imports with `ssr: false` for all widgets
+  - Skeleton loading states for smooth UX
+  - Error boundary for widget crash isolation
+- **Stub Widgets Created:**
+  - `LeadListWidget` (CRM module) - Full implementation Phase 3
+  - `RevenueChartWidget` (Finance module) - Future version
+  - `PlaceholderWidget` - Fallback for unknown widget types
+- **Routing Structure:**
+  - Dashboard layout with sidebar and auth protection
+  - Documents list page with workspace filtering
+  - Document editor page (Server Component → Client Editor)
+  - New document creation flow
+  - Auth page stubs
+
+### Architecture Highlights
+- **Strict Client/Server Boundary:** Page shells fetch data (RSC), Editor renders client-side
+- **Code Splitting:** BlockNote bundle only loads on document pages
+- **Debounced Persistence:** 1-second delay prevents save flooding
+- **Type-Safe Registry:** WidgetKey union type enforces valid widget strings
+
+### Technical Decisions
+- **Mantine for BlockNote:** Using @blocknote/mantine for consistent styling
+- **EditorWrapper Pattern:** Abstracts dynamic import complexity from consumers
+- **Generated Types:** Actions use explicit type casting for Supabase responses
+- **Registry Extension:** Use `.tsx` extension for the registry to support JSX in loading skeletons
+
+### Known Limitations (Phase 2)
+1. Auth pages are stubs - full implementation in Phase 3
+2. Widget stubs don't fetch real data - Phase 3 implementation
+3. No custom BlockNote blocks yet - requires schema extension
+4. Sidebar navigation is static placeholder
+
+### Next Steps (Phase 3)
+1. Implement full Supabase Auth flow (login, register, logout)
+2. Build CRM Lead List widget with TanStack Query
+3. Implement dual-layer security (Document RLS + Widget RLS)
+4. Add custom BlockNote block for widget insertion
+5. Create slash command for widget menu
