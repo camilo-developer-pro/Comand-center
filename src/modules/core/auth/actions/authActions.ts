@@ -330,44 +330,67 @@ export async function updatePassword(
 /**
  * Get the current authenticated user
  */
+/**
+ * Get the current authenticated user
+ */
 export async function getCurrentUser() {
-    const supabase = await createClient();
+    try {
+        const supabase = await createClient();
 
-    const { data: { user }, error } = await supabase.auth.getUser();
+        const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (error || !user) {
+        if (error || !user) {
+            return null;
+        }
+
+        // Get user profile
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        // Check super admin status
+        // RPC might fail if migration hasn't run, so wrap safe
+        let isSuperAdmin = false;
+        try {
+            const { data } = await supabase.rpc('is_super_admin');
+            isSuperAdmin = data === true;
+        } catch (e) {
+            console.warn('[authActions] is_super_admin RPC check failed:', e);
+        }
+
+        // Get default workspace
+        let workspace = null;
+        if (profile?.default_workspace_id) {
+            const { data: ws } = await supabase
+                .from('workspaces')
+                .select('*')
+                .eq('id', profile.default_workspace_id)
+                .single();
+            workspace = ws;
+        }
+
+        return {
+            user: {
+                id: user.id,
+                email: user.email!,
+                fullName: user.user_metadata?.full_name || profile?.full_name || null,
+                avatarUrl: user.user_metadata?.avatar_url || profile?.avatar_url || null,
+                createdAt: user.created_at,
+            },
+            profile: {
+                ...profile,
+                // Safe fallback if column doesn't exist yet (though migration should have run)
+                system_role: (profile as any)?.system_role || 'user',
+            },
+            workspace,
+            isSuperAdmin,
+        };
+    } catch (error) {
+        console.error('[authActions] getCurrentUser error:', error);
         return null;
     }
-
-    // Get user profile
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-    // Get default workspace
-    let workspace = null;
-    if (profile?.default_workspace_id) {
-        const { data: ws } = await supabase
-            .from('workspaces')
-            .select('*')
-            .eq('id', profile.default_workspace_id)
-            .single();
-        workspace = ws;
-    }
-
-    return {
-        user: {
-            id: user.id,
-            email: user.email!,
-            fullName: user.user_metadata?.full_name || profile?.full_name || null,
-            avatarUrl: user.user_metadata?.avatar_url || profile?.avatar_url || null,
-            createdAt: user.created_at,
-        },
-        profile,
-        workspace,
-    };
 }
 
 /**

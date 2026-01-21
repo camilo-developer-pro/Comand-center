@@ -28,3 +28,40 @@ export type QueryResult<T> = {
     data: T | null
     error: Error | null
 }
+
+// ============================================
+// SUPER ADMIN TYPES
+// Added post-Phase 5
+// ============================================
+
+// System role type
+export type SystemRole = 'user' | 'super_admin';
+
+// Extended profile with system role
+export interface ProfileWithSystemRole {
+    id: string;
+    email: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    default_workspace_id: string | null;
+    system_role: SystemRole;
+    created_at: string;
+    updated_at: string;
+}
+
+// Super admin status check result
+export interface SuperAdminStatus {
+    isSuperAdmin: boolean;
+    email: string | null;
+}
+
+// Audit log entry
+export interface AuditLogEntry {
+    id: string;
+    admin_user_id: string;
+    action: string;
+    target_table: string | null;
+    target_id: string | null;
+    details: Record<string, unknown>;
+    created_at: string;
+}

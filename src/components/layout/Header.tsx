@@ -10,6 +10,9 @@ import { getCurrentUser } from '@/modules/core/auth/actions/authActions';
 import { UserMenu } from '@/modules/core/auth/components/UserMenu';
 import Link from 'next/link';
 
+import { SearchManager } from '@/modules/core/search';
+import { SuperAdminBadge } from '@/modules/core/admin/components/SuperAdminBadge';
+
 export async function Header() {
     const userData = await getCurrentUser();
 
@@ -37,41 +40,23 @@ export async function Header() {
                             </span>
                         </>
                     )}
+
+                    {/* Super Admin Badge */}
+                    {userData?.isSuperAdmin && (
+                        <div className="flex items-center gap-2">
+                            <SuperAdminBadge />
+                            <Link
+                                href="/admin"
+                                className="px-3 py-1 text-xs font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors shadow-sm"
+                            >
+                                Admin Panel
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
-                {/* Center: Search (placeholder for future) */}
-                <div className="flex-1 max-w-md mx-4 hidden md:block">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Search documents..."
-                            className={`
-                w-full px-4 py-1.5 pl-10 text-sm
-                bg-gray-100 dark:bg-gray-700
-                border border-transparent
-                rounded-lg
-                focus:bg-white dark:focus:bg-gray-600
-                focus:border-gray-300 dark:focus:border-gray-500
-                focus:outline-none focus:ring-2 focus:ring-blue-500
-                placeholder-gray-500 dark:placeholder-gray-400
-                text-gray-900 dark:text-white
-              `}
-                        />
-                        <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
-                    </div>
-                </div>
+                {/* Center: Search */}
+                <SearchManager />
 
                 {/* Right: User Menu */}
                 <div className="flex items-center gap-2">

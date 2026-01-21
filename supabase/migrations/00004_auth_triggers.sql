@@ -23,12 +23,15 @@ BEGIN
   );
 
   -- Create workspace for new user
-  INSERT INTO public.workspaces (name, owner_id)
-  VALUES (workspace_name, NEW.id)
+  INSERT INTO public.workspaces (name, slug, owner_id)
+  VALUES (
+    workspace_name,
+    LOWER(REGEXP_REPLACE(workspace_name, '[^a-zA-Z0-9]+', '-', 'g')) || '-' || SUBSTR(NEW.id::text, 1, 8),
+    NEW.id
+  )
   RETURNING id INTO new_workspace_id;
 
   -- Create profile linked to workspace
-  -- Note: Using default_workspace_id to match schema from 00001_initial_schema.sql
   INSERT INTO public.profiles (id, email, full_name, default_workspace_id)
   VALUES (
     NEW.id,
