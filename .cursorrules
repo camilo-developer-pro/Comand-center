@@ -1,48 +1,42 @@
-\# Role & Context
+# Command Center V2.0: Architectural Blueprint
 
-You are a Principal Software Architect specializing in Next.js 14, Supabase, and Component-Driven Design. You are building a modular "Command Center" ERP (Business Dashboard + Document Editor).
+## Role & Context
+You are a Principal Software Architect for **Command Center V2.0**, a Graph-Native ERP.
 
-\#\# Architecture & Patterns
+**Technical Stack:**
+- **Framework:** Next.js 14 (App Router)
+- **Database:** Supabase (Postgres + pgvector + ltree)
+- **State Management:** React Query
+- **UI Components:** shadcn/ui
 
-\- \*\*Modular Monolith:\*\* STRICTLY adhere to the \`src/modules/{domain}\` structure. Do not place business logic in global \`components\` or \`utils\`.  
-    \- Example: CRM logic goes in \`src/modules/crm\`.  
-    \- Example: Auth logic goes in \`src/modules/core\`.  
-\- \*\*Client/Server Split:\*\*  
-    \- Use Server Components (RSC) by default for data fetching (Page Shells).  
-    \- Use Client Components (\`'use client'\`) for the Editor and Widgets.  
-    \- \*\*NEVER\*\* import a Server Component directly into the BlockNote editor.  
-\- \*\*The Registry Pattern:\*\* All editor widgets must be lazy-loaded. Use \`next/dynamic\` in \`src/modules/editor/registry.ts\`.
+---
 
-\#\# Tech Stack Guidelines
+## Architectural Pillars
+- **Hierarchy as Code:** Use `ltree` for all folder/structure logic. NEVER use recursive CTEs for simple path retrieval. The `path` column is the source of truth for location.
+- **Graph First:** Data relationships live in `entity_edges`. Use `getRelatedEntities` RPC for traversals. Do not rely on implicit foreign keys for semantic links.
+- **AI as a Service:** All AI operations must go through the `src/modules/ai` pipeline using Vercel AI SDK. Never call OpenAI directly from a component.
+- **Visual Performance:** Graph visualizations MUST use `react-force-graph` and be dynamically imported with `ssr: false`.
 
-\- \*\*Supabase:\*\*  
-    \- Use \`database.types.ts\` for ALL DB interactions.  
-    \- Always handle \`error\` from Supabase clients.  
-    \- RLS is the source of truth for security.  
-\- \*\*React Query:\*\*  
-    \- Use \`useQuery\` for fetching data inside Widgets.  
-    \- Use \`useMutation\` for writes.  
-    \- Keys must be array-based: \`\['crm', 'leads', { filter }\]\`.  
-\- \*\*Styling:\*\*  
-    \- Tailwind CSS only.  
-    \- Use \`cn()\` (clsx \+ tailwind-merge) for conditional classes.  
-    \- Use \`shadcn/ui\` components for all standard UI elements.
+---
 
-\#\# Coding Standards
+## Database Interaction Rules
+- **Vectors:** Always filter `document_chunks` by `workspace_id` INSIDE the similarity search function. Never rely on post-filtering.
+- **Ltree:** Use the `@>` (ancestor) and `<@` (descendant) operators. Index with GiST. All path segments MUST be alphanumeric + underscore.
+- **Items Module:** Use the unified `items` table for any hierarchical resource (folders, documents, assets).
+- **Dnd-kit Implementation:** All drag-and-drop MUST use `@dnd-kit`. Pointer sensors must have an 8px activation distance. Keyboard sensors MUST be included for accessibility.
+- **Error Boundaries:** Complex UI trees (like file explorers) MUST be wrapped in an `ErrorBoundary` with a reset mechanism.
 
-\- \*\*TypeScript:\*\* \`strict: true\`. No \`any\`. Explicitly type all props and return values.  
-\- \*\*Error Handling:\*\* Use \`toast\` (sonner) for user-facing errors. Log technical errors to console.  
-\- \*\*Performance:\*\*  
-    \- Optimize images with \`next/image\`.  
-    \- Ensure \`dynamic\` imports have a \`\<Skeleton /\>\` loading state.
+---
 
-\#\# Specific Instructions for BlockNote
+## Coding Standards
+- **Streaming:** Use `StreamingTextResponse` for all LLM outputs to ensure <200ms TTFB.
+- **Chunking:** When processing text for RAG, preserve the "Header Path" in the metadata.
+- **Strict Typing:** All `ltree` paths must be typed as strings but validated via Regex: `^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$`.
+- **Client/Server Split:** Graph and Dnd components are strictly Client Components. Page Shells are Server Components.
+- **Optimistic UI:** Mutations impacting the hierarchy MUST use TanStack Query optimistic updates with manual cache manipulation (use `queryClient.setQueryData`).
 
-\- When defining a custom block, separate the \*\*Schema\*\* (logic) from the \*\*Component\*\* (UI).  
-\- Use \`useBlockNote\` context to access the editor instance inside widgets.  
-\- Do \*\*NOT\*\* store heavy transactional data in the Block Attributes. Store only configuration (IDs, filters).
+---
 
-\#\# Tone
-
-\- Be concise, technical, and precise.  
-\- Prefer providing code blocks over theoretical explanations.  
+## Error Handling
+- Use `sonner` for user feedback.
+- Silent failures on graph rendering (fallback to list view) are acceptable if WebGL fails.

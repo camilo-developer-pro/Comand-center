@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-01-21: V2.0 Phase 1 - Hierarchical File System Complete
+
+### Accomplishments
+- **Database Schema (Ltree):**
+  - Implemented `items` table using PostgreSQL `ltree` for materialized paths.
+  - Added GiST and B-tree indexes for high-performance subtree queries.
+  - Implemented automatic path generation and validation via triggers.
+  - Created reversible migration with data backfill for existing documents.
+- **Atomic Subtree Movement:**
+  - Developed `move_item_subtree` PL/pgSQL function with built-in cycle detection.
+  - Implemented `SECURITY DEFINER` wrapper for safe RLS-compliant batch updates.
+  - Handles path collisions and recursive path transformations atomically.
+- **Hierarchical React UI:**
+  - Built recursive `ItemTree` and `ItemTreeNode` components.
+  - Integrated `@dnd-kit` for accessible, performant drag-and-drop.
+  - Implemented state persistence for expanded folders using `localStorage`.
+  - Added visual drop indicators and custom drag overlays.
+- **Resilience & Validation:**
+  - Created client-side `validateMove` utility for instant feedback and cycle detection.
+  - Implemented `ItemTreeErrorBoundary` to catch and recover from tree-level render errors.
+  - Integrated `sonner` toast notifications for all file operations (move, create, etc.).
+  - Added comprehensive Vitest integration tests for move logic.
+- **Server Actions & Hooks:**
+  - Implemented full CRUD Server Actions for hierarchy management.
+  - Created optimized TanStack Query hooks with optimistic UI updates.
+
+### Architecture Highlights
+- **Unified Items Table:** Manages both folders and document references in a single tree.
+- **Ltree for Materialized Paths:** Efficient breadcrumb, ancestor, and descendant lookups.
+- **Optimistic UI:** Immediate visual feedback during drag-and-drop with automatic rollback on failure.
+- **Recursive Rendering:** Memoized components ensure high performance even with large, deeply nested trees.
+
+### Files Created/Modified
+```
+src/modules/core/items/
+├── actions/itemActions.ts
+├── hooks/ (useItems.ts, useMoveItemWithValidation.ts)
+├── types/index.ts
+├── utils/validateMove.ts
+├── components/ (ItemTree, ItemTreeNode, ItemDragOverlay, CreateFolderButton, ItemTreeErrorBoundary)
+└── index.ts
+
+src/components/layout/Sidebar.tsx (Updated)
+src/app/(dashboard)/layout.tsx (Added Toaster)
+tests/items/move-item.test.ts
+supabase/migrations/
+├── 00010_hierarchical_items_ltree.sql
+└── 00011_move_item_subtree_function.sql
+```
+
+### V2.0 Phase 1 Acceptance Criteria
+- [x] Folders can be created and nested
+- [x] Documents appear within the folder hierarchy
+- [x] Drag-and-drop allows moving items between folders
+- [x] Cycle detection prevents moving parent into child
+- [x] Expanded folder state persists across sessions
+- [x] UI is fully accessible (keyboard/keyboard drag)
+- [x] 100% test coverage for move validation logic
+
+---
+
 ## 2026-01-21: Stability Hotfix - Workspace Access & RLS Recursion Resolved
 
 ### Accomplishments
