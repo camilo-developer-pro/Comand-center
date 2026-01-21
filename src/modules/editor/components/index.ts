@@ -16,6 +16,9 @@ export {
     StatsSkeleton
 } from './WidgetSkeleton';
 
+// Lazy hydration
+export { LazyHydrationBoundary, type LazyHydrationBoundaryProps } from './LazyHydrationBoundary';
+
 // Placeholder
 export { PlaceholderWidget } from './PlaceholderWidget';
 

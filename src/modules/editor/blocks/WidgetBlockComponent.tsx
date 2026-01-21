@@ -3,10 +3,11 @@
 /**
  * Widget Block Component
  * 
- * V1.1 Phase 3: Widget Insertion UX
+ * V1.1 Phase 4: Lazy Hydration
  * 
  * This component renders inside a BlockNote block and:
  * - Loads the appropriate widget from the registry
+ * - Defers widget hydration until visible (lazy loading)
  * - Handles selection state for editing
  * - Provides configuration UI access
  * - Wraps widget in error boundary
@@ -17,6 +18,8 @@ import { useBlockNoteEditor } from '@blocknote/react';
 import { getWidget, WIDGET_METADATA, type WidgetKey } from '../registry';
 import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import { WidgetSkeleton } from '../components/WidgetSkeleton';
+import { LazyHydrationBoundary } from '../components/LazyHydrationBoundary';
+import { usePrefetchWidget } from '../hooks/usePrefetchWidget';
 import type { WidgetBlockProps } from './types';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +44,7 @@ interface BlockComponentProps {
 export function WidgetBlockComponent({ block, editor }: BlockComponentProps) {
     const [isHovered, setIsHovered] = useState(false);
     const [showConfig, setShowConfig] = useState(false);
+    const [isHydrated, setIsHydrated] = useState(false);
 
     const { widgetType, config: configString, title, widgetId } = block.props;
 
@@ -81,6 +85,13 @@ export function WidgetBlockComponent({ block, editor }: BlockComponentProps) {
         editor.removeBlocks([block.id]);
     }, [editor, block.id]);
 
+    // Prefetch widget data on hover (only if not yet hydrated)
+    const { onMouseEnter: prefetchOnEnter, onMouseLeave: prefetchOnLeave } = usePrefetchWidget({
+        widgetType,
+        config: config || {},
+        enabled: !isHydrated, // Only prefetch if not yet hydrated
+    });
+
     return (
         <div
             className={cn(
@@ -88,10 +99,17 @@ export function WidgetBlockComponent({ block, editor }: BlockComponentProps) {
                 'ring-2 ring-transparent',
                 isHovered && 'ring-blue-200 dark:ring-blue-800'
             )}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={() => {
+                setIsHovered(true);
+                prefetchOnEnter();
+            }}
+            onMouseLeave={() => {
+                setIsHovered(false);
+                prefetchOnLeave();
+            }}
             data-widget-id={widgetId}
             data-widget-type={widgetType}
+            data-lazy-state={isHydrated ? 'hydrated' : 'pending'}
         >
             {/* Widget Header (shown on hover) */}
             <WidgetBlockHeader
@@ -105,12 +123,22 @@ export function WidgetBlockComponent({ block, editor }: BlockComponentProps) {
             {/* Widget Content */}
             <div className="relative">
                 <WidgetErrorBoundary widgetType={widgetType}>
-                    <Suspense fallback={<WidgetSkeleton title={title || metadata?.label} rows={5} />}>
-                        <WidgetComponent
-                            config={config}
-                            className="w-full"
-                        />
-                    </Suspense>
+                    <LazyHydrationBoundary
+                        widgetType={widgetType}
+                        minHeight={200}
+                        rootMargin="150px"
+                        onVisible={() => {
+                            setIsHydrated(true);
+                            console.log(`[Lazy Hydration] Widget ${widgetId || block.id} (${widgetType}) entered viewport`);
+                        }}
+                    >
+                        <Suspense fallback={<WidgetSkeleton title={title || metadata?.label} rows={5} />}>
+                            <WidgetComponent
+                                config={config}
+                                className="w-full"
+                            />
+                        </Suspense>
+                    </LazyHydrationBoundary>
                 </WidgetErrorBoundary>
             </div>
 

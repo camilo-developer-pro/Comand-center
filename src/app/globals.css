@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================================
+   Lazy Hydration Animation
+   ============================================================================ */
+
+/**
+ * Fade-in animation for widgets when they hydrate.
+ * Applied to LazyHydrationBoundary when widget becomes visible.
+ */
+.widget-hydrating {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

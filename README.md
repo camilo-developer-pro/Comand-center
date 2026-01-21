@@ -48,6 +48,7 @@ Command Center ERP is a **"Browser for Business Logic"** - a composable canvas w
 - `crm_leads` - Demo transactional data table
 
 ### Key Features
+✅ **Lazy Hydration** - Widgets only load when scrolled into view
 ✅ **Generated Columns** for widget indexing and full-text search  
 ✅ **GIN Indexes** on JSONB for high-performance queries  
 ✅ **Row Level Security** on all tables  
