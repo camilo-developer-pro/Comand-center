@@ -13,9 +13,9 @@ You are a Principal Software Architect for **Command Center V2.0**, a Graph-Nati
 
 ## Architectural Pillars
 - **Hierarchy as Code:** Use `ltree` for all folder/structure logic. NEVER use recursive CTEs for simple path retrieval. The `path` column is the source of truth for location.
-- **Graph First:** Data relationships live in `entity_edges`. Use `getRelatedEntities` RPC for traversals. Do not rely on implicit foreign keys for semantic links.
+- **Graph First:** Data relationships live in `entity_edges`. Use `get_graph_neighborhood` for Focus Mode and `get_workspace_graph_overview` for general traversals. Do not rely on implicit foreign keys for semantic links. Always utilize the automated mention extraction trigger for document-entity linking.
 - **AI Module:** All AI operations must go through the `src/modules/ai` public API. Use `processDocument` for ingestion and `matchDocuments` for retrieval.
-- **Visual Performance:** Graph visualizations MUST use `react-force-graph` and be dynamically imported with `ssr: false`.
+- **Visual Performance:** Graph visualizations MUST use `react-force-graph` and be dynamically imported with `ssr: false`. Use `nodeCanvasObject` for multi-threaded-like rendering performance on large datasets.
 
 ---
 

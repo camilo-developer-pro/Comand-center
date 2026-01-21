@@ -23,6 +23,47 @@ export type WorkspaceMember = Database['public']['Tables']['workspace_members'][
 export type WorkspaceRole = Database['public']['Enums']['workspace_role']
 export type LeadStatus = Database['public']['Enums']['lead_status']
 
+// Entity Edge types
+export type EntityEdge = Database['public']['Tables']['entity_edges']['Row'];
+export type EntityEdgeInsert = Database['public']['Tables']['entity_edges']['Insert'];
+export type EntityEdgeUpdate = Database['public']['Tables']['entity_edges']['Update'];
+
+// Entity types for type safety
+export type EntityType = 'document' | 'lead' | 'user' | 'task' | 'item';
+export type RelationType = 'mentions' | 'assigned_to' | 'blocks' | 'parent_of' | 'related_to';
+
+// Graph data structures for react-force-graph
+export interface GraphNode {
+    id: string;
+    name: string;
+    type: EntityType;
+    val?: number; // Node size/importance
+    color?: string;
+    // Additional metadata
+    workspaceId?: string;
+    createdAt?: string;
+}
+
+export interface GraphLink {
+    source: string;
+    target: string;
+    relation: RelationType;
+    properties?: Record<string, unknown>;
+}
+
+export interface GraphData {
+    nodes: GraphNode[];
+    links: GraphLink[];
+}
+
+// RPC response type for get_graph_neighborhood
+export interface GraphNeighborhoodResponse {
+    nodes: GraphNode[];
+    links: GraphLink[];
+    totalNodes: number;
+    hasMore: boolean;
+}
+
 // Utility type for Supabase query results
 export type QueryResult<T> = {
     data: T | null

@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-01-21: V2.0 Phase 3 - Neural Knowledge Graph Complete
+
+### Accomplishments
+- **Polymorphic Edge Infrastructure:**
+  - Implemented `entity_edges` table for workspace-isolated graph relationships.
+  - Added support for multiple entity types: `document`, `lead`, `user`, `task`, `item`.
+  - Created GIN and B-tree indexes for optimized bidirectional graph traversals.
+- **Automated Mention Extraction:**
+  - Developed a recursive PL/pgSQL function to traverse deeply nested BlockNote JSON structures.
+  - Implemented an `AFTER INSERT OR UPDATE` trigger on `documents` to synchronize graph edges with `@mentions` in real-time.
+- **Advanced Graph RPCs:**
+  - Built `get_graph_neighborhood` for "Focus Mode" navigation (outbound/inbound edges).
+  - Implemented `get_top_connected_nodes` for cluster-level overview of dense graphs.
+  - Created `get_full_workspace_graph` for workspace-wide relationship mapping.
+- **Interactive Neural Visualization:**
+  - Built the `NeuralGraph` component using `react-force-graph-2d` with dynamic client-side loading.
+  - Features: Animated focus transitions, connection-based node importance (scaling), and FSD-compliant state management.
+  - Integrated "Focus Mode" allowing users to drill down into specific entity neighborhoods.
+- **Full-Stack Integration:**
+  - Created dedicated `/graph` dashboard page.
+  - Updated global Sidebar navigation with localized iconography.
+  - Established strict TypeScript safety for graph data structures (`src/types/helpers.ts`).
+
+### Files Created/Modified
+- `src/modules/graph/` (actions, components, types, index)
+- `src/app/(dashboard)/graph/page.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `supabase/migrations/00011_entity_edges_graph.sql`
+- `src/types/helpers.ts`
+
+---
+
 ## 2026-01-21: V2.0 Phase 2 - Semantic Brain (RAG) Complete
 
 ### Accomplishments
