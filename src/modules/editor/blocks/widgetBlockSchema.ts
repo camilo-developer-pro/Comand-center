@@ -64,14 +64,22 @@ export const WidgetBlock = createReactBlockSpec(
 
 /**
  * BlockNote schema extended with our custom widget block.
+ * 
+ * Safety check: If defaultBlockSpecs or WidgetBlock is undefined during 
+ * module evaluation (common in some Next.js/Turbopack environments),
+ * we provide a fallback to avoid the "cannot read properties of undefined (reading 'node')" error.
  */
+const safeBlockSpecs = {
+    ...(defaultBlockSpecs || {}),
+};
+
+// Only add widget if it exists
+if (WidgetBlock) {
+    (safeBlockSpecs as any).widget = WidgetBlock;
+}
+
 export const widgetBlockSchema = BlockNoteSchema.create({
-    blockSpecs: {
-        // Include all default block types
-        ...defaultBlockSpecs,
-        // Add our custom widget block
-        widget: (WidgetBlock as any),
-    },
+    blockSpecs: safeBlockSpecs as any,
 });
 
 // ============================================================

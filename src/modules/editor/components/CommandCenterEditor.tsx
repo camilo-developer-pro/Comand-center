@@ -15,44 +15,84 @@ import { useCreateBlockNote, SuggestionMenuController } from '@blocknote/react';
 import { PartialBlock } from '@blocknote/core';
 import '@blocknote/mantine/style.css';
 
+import { cn } from '@/lib/utils';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { saveDocumentContent } from '../actions/documentActions';
-import { widgetBlockSchema } from '../blocks/widgetBlockSchema';
+import { widgetBlockSchema, insertWidgetBlock } from '../blocks/widgetBlockSchema';
 import { getCustomSlashMenuItems } from './SlashMenuItems';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import { WidgetPicker } from './WidgetPicker';
 
 interface CommandCenterEditorProps {
-    documentId: string;
-    initialContent?: string;
-    workspaceId: string;
-    title: string;
+    documentId?: string;
+    initialContent?: string | any[];
+    workspaceId?: string;
+    title?: string;
     onSaveStatusChange?: (status: 'saved' | 'saving' | 'unsaved') => void;
+    onContentChange?: (content: any[]) => void;
+    onSave?: (content: any[]) => Promise<void>;
+    debounceMs?: number;
+    className?: string;
 }
 
 export function CommandCenterEditor({
-    documentId,
+    documentId = 'test-doc',
     initialContent,
-    workspaceId,
-    title,
+    workspaceId = 'test-workspace',
+    title = 'Document Editor',
     onSaveStatusChange,
+    onContentChange,
+    onSave,
+    debounceMs = 1000,
+    className,
 }: CommandCenterEditorProps) {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [isPickerOpen, setIsPickerOpen] = useState(false);
 
+    // Helper to parse content if it comes as string
+    const getInitialContent = useCallback(() => {
+        if (!initialContent) return undefined;
+        if (typeof initialContent === 'string') {
+            try {
+                return JSON.parse(initialContent);
+            } catch (e) {
+                console.error('Failed to parse initial content string', e);
+                return undefined;
+            }
+        }
+        return initialContent;
+    }, [initialContent]);
+
     // Initialize editor with our custom widget schema
     const editor = useCreateBlockNote({
         schema: widgetBlockSchema as any,
-        initialContent: initialContent ? JSON.parse(initialContent) : undefined,
+        initialContent: getInitialContent() as any,
     });
 
     // Auto-save logic using our custom hook
     const performSave = useCallback(async (content: any) => {
+        // Handle callback-based save for test pages
+        if (onSave) {
+            onSaveStatusChange?.('saving');
+            try {
+                await onSave(content);
+                onSaveStatusChange?.('saved');
+                setSaveError(null);
+            } catch (e) {
+                setSaveError('Save failed');
+                onSaveStatusChange?.('unsaved');
+            }
+            return;
+        }
+
+        // Handle server action save for real pages
+        if (!documentId) return;
+
         onSaveStatusChange?.('saving');
         try {
             const result = await saveDocumentContent({
                 documentId,
-                content: JSON.stringify(content),
+                content: content as any,
             });
 
             if (result.success) {
@@ -67,18 +107,19 @@ export function CommandCenterEditor({
             setSaveError('Network error');
             onSaveStatusChange?.('unsaved');
         }
-    }, [documentId, onSaveStatusChange]);
+    }, [documentId, onSaveStatusChange, onSave]);
 
-    const { debouncedFn: debouncedSave } = useDebounce(performSave, 1000);
+    const { debouncedFn: debouncedSave } = useDebounce(performSave, debounceMs);
 
     // Handle content changes
     const handleChange = useCallback(() => {
         onSaveStatusChange?.('unsaved');
+        onContentChange?.(editor.document as any[]);
         debouncedSave(editor.document);
-    }, [editor, debouncedSave, onSaveStatusChange]);
+    }, [editor, debouncedSave, onSaveStatusChange, onContentChange]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-gray-950">
+        <div className={cn("flex flex-col h-full bg-white dark:bg-gray-950", className)}>
             {/* Editor Toolbar/Header */}
             <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="flex items-center gap-4">
@@ -100,7 +141,7 @@ export function CommandCenterEditor({
                 </div>
 
                 <SaveStatusIndicator
-                    isSaving={false} // Managed by outer state usually, or simplified here
+                    isSaving={false}
                     lastSaved={null}
                     hasUnsavedChanges={false}
                     error={saveError}
@@ -113,10 +154,9 @@ export function CommandCenterEditor({
                     <BlockNoteView
                         editor={editor as any}
                         onChange={handleChange}
-                        slashMenu={false} // We use our own suggestion controller
-                        theme="light" // Can be dynamic
+                        slashMenu={false}
+                        theme="light"
                     >
-                        {/* Custom Slash Menu Controller */}
                         <SuggestionMenuController
                             triggerCharacter="/"
                             getItems={async (query) => {
@@ -136,11 +176,9 @@ export function CommandCenterEditor({
                 isOpen={isPickerOpen}
                 onClose={() => setIsPickerOpen(false)}
                 onSelect={(type) => {
-                    // This is handled by WidgetPicker calling editor.insertOrUpdateBlock 
-                    // or similar, but here we can just close
+                    insertWidgetBlock(editor, type);
                     setIsPickerOpen(false);
                 }}
-                editor={editor}
             />
         </div>
     );
