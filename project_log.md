@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-01-21: V2.0 Phase 4.3 - Neural Graph Integration
+
+### Accomplishments
+- **Database Layer (Graph-Native):**
+  - Created `entity_edges` table with `ltree` parent support and JSONB properties.
+  - Implemented automated `@mention` extraction trigger: parses document content to sync graph links.
+  - Developed high-performance RPCs: `get_full_workspace_graph` and `get_graph_neighborhood`.
+- **Server Actions:**
+  - `getWorkspaceGraphOverview`: Implemented cluster-headers fallback for large datasets (1000+ nodes).
+  - `getNodeNeighborhood`: Focus Mode data fetching for local graph exploration.
+- **Frontend (Visual Engine):**
+  - Developed `NeuralGraph` component using `react-force-graph-2d` (dynamically imported).
+  - Implemented Focus Mode: double-click to explore a node's immediate semantic neighborhood.
+  - Custom canvas rendering for node types (blue: docs, red: leads, green: users).
+- **Navigation:**
+  - Created `/graph` dashboard page.
+  - Updated Sidebar with global "Knowledge Graph" link.
+
+### Architecture Highlights
+- **WebGL Rendering:** Offloaded graph physics and rendering to local canvas.
+- **Dynamic Ingestion:** Document edits automatically propagate to the graph via Postgres triggers.
+- **Scalability:** Adaptive level-of-detail (LOD) based on node counts.
+
+### Files Created/Modified
+- `supabase/migrations/00011_entity_edges_graph.sql`
+- `src/modules/graph/` (Types, Actions, Components)
+- `src/app/(dashboard)/graph/page.tsx`
+- `src/components/layout/Sidebar.tsx`
+
+---
+
 ## 2026-01-21: V2.0 Phase 4.2 - Dashboard KPI Cards Frontend
 
 ### Accomplishments
