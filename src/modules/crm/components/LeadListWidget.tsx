@@ -20,13 +20,13 @@ import { WidgetErrorBoundary } from '@/modules/editor/components/WidgetErrorBoun
 import { AccessDeniedState } from '@/modules/editor/components/AccessDeniedState';
 import { LeadListSkeleton } from '@/modules/editor/components/WidgetSkeleton';
 import {
-    LEAD_STATUS_CONFIG,
-    LEAD_STATUS_ORDER,
     type Lead,
     type LeadStatus,
     type LeadListWidgetConfig
 } from '../types';
+import { LeadStatusBadge } from './LeadStatusBadge';
 import { cn } from '@/lib/utils';
+import { LeadsEmptyState } from '@/components/ui/empty-states';
 
 // ============================================================
 // Props Interface
@@ -69,12 +69,7 @@ export function LeadListWidget({ config = {}, className }: LeadListWidgetProps) 
 
     // Handle seed sample data
     const handleSeedData = async () => {
-        try {
-            await seedMutation.mutateAsync();
-            toast.success('Sample leads created!');
-        } catch (err) {
-            toast.error('Failed to create sample leads');
-        }
+        await seedMutation.mutateAsync();
     };
 
     // Check for access denied (RLS failure)
@@ -134,7 +129,10 @@ export function LeadListWidget({ config = {}, className }: LeadListWidgetProps) 
 
                 {/* Content */}
                 {leads.length === 0 ? (
-                    <EmptyState onSeedData={handleSeedData} isSeeding={seedMutation.isPending} />
+                    <LeadsEmptyState
+                        onSeedData={handleSeedData}
+                        isSeeding={seedMutation.isPending}
+                    />
                 ) : (
                     <LeadTable
                         leads={leads}
@@ -217,49 +215,6 @@ function WidgetHeader({ title, count, isRefreshing, onRefresh }: WidgetHeaderPro
     );
 }
 
-interface EmptyStateProps {
-    onSeedData: () => void;
-    isSeeding: boolean;
-}
-
-function EmptyState({ onSeedData, isSeeding }: EmptyStateProps) {
-    return (
-        <div className="p-8 text-center">
-            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                    className="w-6 h-6 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                    />
-                </svg>
-            </div>
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                No leads yet
-            </h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Get started by adding your first lead or loading sample data.
-            </p>
-            <button
-                type="button"
-                onClick={onSeedData}
-                disabled={isSeeding}
-                className={cn(
-                    'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors',
-                    isSeeding && 'opacity-50 cursor-not-allowed'
-                )}
-            >
-                {isSeeding ? 'Creating...' : 'Load Sample Leads'}
-            </button>
-        </div>
-    );
-}
 
 interface LeadTableProps {
     leads: Lead[];
@@ -313,31 +268,11 @@ interface LeadRowProps {
 }
 
 function LeadRow({ lead, showValue, showCompany }: LeadRowProps) {
-    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-    const updateStatusMutation = useUpdateLeadStatus();
-
-    const statusConfig = LEAD_STATUS_CONFIG[lead.status];
-
-    const handleStatusChange = async (newStatus: LeadStatus) => {
-        setIsStatusMenuOpen(false);
-
-        if (newStatus === lead.status) return;
-
-        try {
-            await updateStatusMutation.mutateAsync({
-                leadId: lead.id,
-                status: newStatus,
-            });
-            toast.success(`Status updated to ${LEAD_STATUS_CONFIG[newStatus].label}`);
-        } catch (err) {
-            toast.error('Failed to update status');
-        }
-    };
 
     // Get initials for avatar
     const initials = lead.name
         .split(' ')
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join('')
         .toUpperCase()
         .slice(0, 2);
@@ -374,53 +309,10 @@ function LeadRow({ lead, showValue, showCompany }: LeadRowProps) {
 
             {/* Status (Clickable) */}
             <td className="px-4 py-3">
-                <div className="relative">
-                    <button
-                        type="button"
-                        onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                        disabled={updateStatusMutation.isPending}
-                        className={cn(
-                            'inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full transition-opacity',
-                            statusConfig.color,
-                            statusConfig.bgColor,
-                            updateStatusMutation.isPending && 'opacity-50'
-                        )}
-                    >
-                        {statusConfig.label}
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-
-                    {/* Status Dropdown */}
-                    {isStatusMenuOpen && (
-                        <>
-                            <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setIsStatusMenuOpen(false)}
-                            />
-                            <div className="absolute left-0 top-full mt-1 z-20 w-36 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1">
-                                {LEAD_STATUS_ORDER.map((status) => {
-                                    const config = LEAD_STATUS_CONFIG[status];
-                                    return (
-                                        <button
-                                            key={status}
-                                            type="button"
-                                            onClick={() => handleStatusChange(status)}
-                                            className={cn(
-                                                'w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                                                status === lead.status && 'bg-gray-50 dark:bg-gray-700'
-                                            )}
-                                        >
-                                            <span className={cn('inline-block w-2 h-2 rounded-full mr-2', config.bgColor)} />
-                                            {config.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
-                </div>
+                <LeadStatusBadge
+                    leadId={lead.id}
+                    currentStatus={lead.status}
+                />
             </td>
 
             {/* Value */}

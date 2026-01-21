@@ -10,6 +10,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
     getLeads,
     getLead,
@@ -131,7 +132,13 @@ export function useCreateLead() {
         onSuccess: () => {
             // Invalidate all lead queries
             queryClient.invalidateQueries({ queryKey: leadKeys.all });
+            toast.success('Lead created');
         },
+        onError: (error) => {
+            toast.error('Failed to create lead', {
+                description: error instanceof Error ? error.message : 'Unknown error'
+            });
+        }
     });
 }
 
@@ -170,11 +177,17 @@ export function useUpdateLead() {
 
             return { previousLead };
         },
+        onSuccess: () => {
+            toast.success('Lead updated');
+        },
         onError: (err, { leadId }, context) => {
             // Rollback on error
             if (context?.previousLead) {
                 queryClient.setQueryData(leadKeys.detail(leadId), context.previousLead);
             }
+            toast.error('Failed to update lead', {
+                description: err instanceof Error ? err.message : 'Unknown error'
+            });
         },
         onSettled: () => {
             // Always refetch after error or success
@@ -228,7 +241,16 @@ export function useUpdateLeadStatus() {
                 }
             });
 
-            return { previousData };
+            // Show optimistic toast
+            toast.loading('Updating lead status...', { id: `lead-status-${leadId}` });
+
+            return { previousData, leadId };
+        },
+        onSuccess: (data, variables, context) => {
+            // Update toast to success
+            toast.success(`Status updated to ${variables.status}`, {
+                id: `lead-status-${context?.leadId}`,
+            });
         },
         onError: (err, variables, context) => {
             // Rollback all caches on error
@@ -237,6 +259,12 @@ export function useUpdateLeadStatus() {
                     queryClient.setQueryData(JSON.parse(key), data);
                 });
             }
+
+            // Update toast to error
+            toast.error('Failed to update status', {
+                id: `lead-status-${context?.leadId}`,
+                description: err instanceof Error ? err.message : 'Unknown error',
+            });
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: leadKeys.all });
@@ -288,6 +316,9 @@ export function useDeleteLead() {
 
             return { previousData };
         },
+        onSuccess: () => {
+            toast.success('Lead deleted');
+        },
         onError: (err, leadId, context) => {
             // Rollback on error
             if (context?.previousData) {
@@ -295,6 +326,9 @@ export function useDeleteLead() {
                     queryClient.setQueryData(JSON.parse(key), data);
                 });
             }
+            toast.error('Failed to delete lead', {
+                description: err instanceof Error ? err.message : 'Unknown error'
+            });
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: leadKeys.all });
@@ -320,7 +354,13 @@ export function useSeedSampleLeads() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: leadKeys.all });
+            toast.success('Sample leads created');
         },
+        onError: (error) => {
+            toast.error('Failed to seed leads', {
+                description: error instanceof Error ? error.message : 'Unknown error'
+            });
+        }
     });
 }
 

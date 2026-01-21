@@ -12,6 +12,7 @@ import Link from 'next/link';
 
 import { SearchManager } from '@/modules/core/search';
 import { SuperAdminBadge } from '@/modules/core/admin/components/SuperAdminBadge';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export async function Header() {
     const userData = await getCurrentUser();
@@ -60,6 +61,7 @@ export async function Header() {
 
                 {/* Right: User Menu */}
                 <div className="flex items-center gap-2">
+                    <ThemeToggle />
                     {userData?.user ? (
                         <UserMenu user={userData.user} />
                     ) : (

@@ -207,3 +207,40 @@ export const getDocumentCount = withTracking('getDocumentCount', async (): Promi
         return { success: false, error: 'Failed to fetch document count', code: 'UNKNOWN' };
     }
 });
+
+/**
+ * Update document title
+ */
+export const updateDocumentTitle = withTracking('updateDocumentTitle', async (
+    documentId: string,
+    title: string
+): Promise<DocumentActionResult> => {
+    try {
+        const { workspaceId } = await requireAuth();
+        const supabase = await createClient();
+
+        const { data, error } = await supabase
+            .from('documents')
+            .update({
+                title,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', documentId)
+            .eq('workspace_id', workspaceId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[documentActions] updateDocumentTitle error:', error);
+            return { success: false, error: error.message };
+        }
+
+        return {
+            success: true,
+            data: data as Document,
+        };
+    } catch (error) {
+        console.error('[documentActions] updateDocumentTitle unexpected error:', error);
+        return { success: false, error: 'Failed to update document title', code: 'UNKNOWN' };
+    }
+});

@@ -4,6 +4,8 @@
  * V1.1 Phase 5: Navigation & Dashboard
  */
 
+import { WidgetEmptyState } from '@/components/ui/empty-states';
+
 interface WidgetUsageCardProps {
     breakdown: Record<string, number>;
 }
@@ -32,9 +34,7 @@ export function WidgetUsageCard({ breakdown }: WidgetUsageCardProps) {
             </div>
             <div className="p-6">
                 {entries.length === 0 ? (
-                    <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No widgets used yet.
-                    </div>
+                    <WidgetEmptyState widgetName="widget usage" />
                 ) : (
                     <div className="space-y-6">
                         {entries.map(([key, count]) => {

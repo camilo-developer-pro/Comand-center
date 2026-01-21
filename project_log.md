@@ -2,6 +2,76 @@
 
 ---
 
+## 2026-01-21: V1.1 Phase 6 - Optimistic UI & Polish Complete
+
+### Accomplishments
+- **Optimistic UI for Document Title:**
+  - Immediate title updates with rollback on error
+  - Editable title component with keyboard support
+  - All document caches update simultaneously
+
+- **Lead Status Optimistic Updates Enhanced:**
+  - Toast notifications integrated
+  - Loading → Success/Error toast progression
+  - Consistent UX with document updates
+
+- **Toast Notification System:**
+  - Global Toaster with `sonner`
+  - Theme-aware styling
+  - Utility functions for `success`/`error`/`warning`/`promise`
+  - Confirmation toasts with actions
+
+- **Keyboard Shortcuts:**
+  - `Cmd+K` opens command palette
+  - `Cmd+S` saves current document
+  - Arrow keys + Enter for navigation
+  - `Escape` to close/cancel
+
+- **Dark Mode:**
+  - `next-themes` integration
+  - Icon toggle in header
+  - Dropdown selector in settings
+  - System preference support
+  - Persisted preference
+
+- **Empty States:**
+  - Consistent base component
+  - Preset states for documents, leads, search
+  - Error state with retry action
+  - Responsive sizing
+
+### Technical Highlights
+- All features follow existing patterns from `useLeads.ts`
+- No new dependencies beyond `sonner` and `next-themes`
+- TypeScript strict mode compliance
+- No console errors or warnings
+
+### Files Created/Modified
+- `src/components/providers/ToastProvider.tsx`
+- `src/components/providers/ThemeProvider.tsx`
+- `src/components/providers/KeyboardShortcutsProvider.tsx`
+- `src/hooks/useKeyboardShortcuts.ts`
+- `src/components/ui/ThemeToggle.tsx`
+- `src/components/ui/EmptyState.tsx`
+- `src/components/ui/empty-states/index.tsx`
+- `src/modules/core/documents/hooks/useDocumentMutations.ts`
+- `src/modules/core/documents/components/EditableDocumentTitle.tsx`
+- `src/lib/toast.ts`
+- `src/app/layout.tsx` (Provider nesting)
+- `tailwind.config.ts` (Dark mode configuration)
+
+### Phase 6 Acceptance Criteria
+- [x] Title updates reflect immediately
+- [x] Lead status changes show toast feedback
+- [x] `Cmd+K` opens command palette
+- [x] `Cmd+S` saves document
+- [x] Theme toggle works and persists
+- [x] Empty states are consistent and helpful
+- [x] No hydration mismatches
+- [x] Dark mode styling complete
+
+---
+
 ## 2026-01-20: V1.1 Phase 5.5 - Super Admin & Health Monitor Complete
 
 ### Accomplishments

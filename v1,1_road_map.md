@@ -190,7 +190,7 @@ Deliverables:
 
 Phase 2: Live Widget Data (Week 2-3)
 Objective: Transform stub widgets into fully functional components that fetch and mutate real data.
-TaskDescriptionPriority2.1Implement CRM Lead List with TanStack Query🔴 Critical2.2Add lead status mutation (click to update)🔴 Critical2.3Implement error boundary for widget failures🔴 Critical2.4Add "Access Denied" state for RLS failures🔴 Critical2.5Create loading skeleton for widget data🟡 High2.6Add widget refresh button🟢 Medium
+TaskDescriptionPriority2.1Implement CRM Lead List with TanStack Query✅ Done2.2Add lead status mutation (click to update)✅ Done2.3Implement error boundary for widget failures✅ Done2.4Add "Access Denied" state for RLS failures✅ Done2.5Create loading skeleton for widget data✅ Done2.6Add widget refresh button✅ Done
 Deliverables:
 
 Fully functional LeadListWidget with real data
@@ -201,7 +201,7 @@ Widget error boundary component
 
 Phase 3: Widget Insertion UX (Week 3-4)
 Objective: Enable users to insert widgets via slash commands and a visual block menu.
-TaskDescriptionPriority3.1Define custom BlockNote schema for widget blocks🔴 Critical3.2Create widget insertion slash command (/widget)🔴 Critical3.3Build widget picker modal/dropdown🔴 Critical3.4Implement widget configuration panel🟡 High3.5Add drag-and-drop reordering for widgets🟢 Medium3.6Create widget placeholder during loading🟡 High
+TaskDescriptionPriority3.1Define custom BlockNote schema for widget blocks✅ Done3.2Create widget insertion slash command (/widget)✅ Done3.3Build widget picker modal/dropdown✅ Done3.4Implement widget configuration panel✅ Done3.5Add drag-and-drop reordering for widgets✅ Done3.6Create widget placeholder during loading✅ Done
 Deliverables:
 
 Custom BlockNote schema (widgetBlock)
@@ -212,7 +212,7 @@ Widget configuration sidebar
 
 Phase 4: Lazy Hydration (Week 4-5)
 Objective: Implement "lazy hydration" so widgets only fetch data when scrolled into view.
-TaskDescriptionPriority4.1Create useIntersectionObserver hook🔴 Critical4.2Wrap widgets in lazy hydration boundary🔴 Critical4.3Implement placeholder skeleton until visible🔴 Critical4.4Add data prefetching on hover (optional)🟢 Medium4.5Benchmark 50-widget document load time🟡 High
+TaskDescriptionPriority4.1Create useIntersectionObserver hook✅ Done4.2Wrap widgets in lazy hydration boundary✅ Done4.3Implement placeholder skeleton until visible✅ Done4.4Add data prefetching on hover (optional)✅ Done4.5Benchmark 50-widget document load time✅ Done
 Deliverables:
 
 LazyHydrationBoundary component
@@ -234,7 +234,7 @@ Settings page skeleton
 
 Phase 6: Optimistic UI & Polish (Week 6-7)
 Objective: Add optimistic updates and visual polish for production readiness.
-TaskDescriptionPriority6.1Implement optimistic UI for document title🟡 High6.2Add optimistic UI for lead status changes🟡 High6.3Implement toast notifications (sonner)🟡 High6.4Add keyboard shortcuts (Cmd+S, Cmd+K)🟢 Medium6.5Implement dark mode toggle🟢 Medium6.6Add empty states for lists🟢 Medium
+TaskDescriptionPriority6.1Implement optimistic UI for document title✅ Done6.2Add optimistic UI for lead status changes✅ Done6.3Implement toast notifications (sonner)✅ Done6.4Add keyboard shortcuts (Cmd+S, Cmd+K)✅ Done6.5Implement dark mode toggle✅ Done6.6Add empty states for lists✅ Done
 Deliverables:
 
 Optimistic mutation patterns

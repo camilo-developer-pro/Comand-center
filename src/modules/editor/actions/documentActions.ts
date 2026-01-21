@@ -42,7 +42,7 @@ async function validateDocumentAccess(
  * Saves document content (JSONB) to Supabase.
  * Called by the debounced auto-save in the Editor component.
  */
-export async function saveDocumentContent(
+export async function saveDocument(
     payload: SaveDocumentPayload
 ): Promise<DocumentActionResponse> {
     try {
@@ -64,7 +64,7 @@ export async function saveDocumentContent(
             .single();
 
         if (error) {
-            console.error('[saveDocumentContent] Supabase error:', error);
+            console.error('[saveDocument] Supabase error:', error);
             return { success: false, error: 'Failed to save document' };
         }
 
@@ -73,7 +73,40 @@ export async function saveDocumentContent(
             data: data as unknown as Document
         };
     } catch (err) {
-        console.error('[saveDocumentContent] Unexpected error:', err);
+        console.error('[saveDocument] Unexpected error:', err);
+        return { success: false, error: 'An unexpected error occurred' };
+    }
+}
+
+/**
+ * Deletes a document by ID.
+ */
+export async function deleteDocument(
+    documentId: string
+): Promise<DocumentActionResponse> {
+    try {
+        const validation = await validateDocumentAccess(documentId);
+        if (!validation.valid) {
+            return { success: false, error: validation.error };
+        }
+
+        const supabase = await createClient();
+
+        const { error } = await supabase
+            .from('documents')
+            .delete()
+            .eq('id', documentId);
+
+        if (error) {
+            console.error('[deleteDocument] Supabase error:', error);
+            return { success: false, error: 'Failed to delete document' };
+        }
+
+        revalidatePath('/documents');
+
+        return { success: true, data: {} as any };
+    } catch (err) {
+        console.error('[deleteDocument] Unexpected error:', err);
         return { success: false, error: 'An unexpected error occurred' };
     }
 }

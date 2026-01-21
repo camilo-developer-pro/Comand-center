@@ -23,3 +23,30 @@
         opacity: 1;
     }
 }
+
+/* ============================================================================
+   Toast Notification Theming
+   ============================================================================ */
+
+:root {
+    --toast-bg: #ffffff;
+    --toast-border: #e5e7eb;
+    --toast-text: #111827;
+}
+
+.dark {
+    --toast-bg: #1f2937;
+    --toast-border: #374151;
+    --toast-text: #f9fafb;
+}
+
+/* Custom toast animations */
+.toast-custom {
+    font-family: inherit;
+}
+
+[data-sonner-toast][data-styled=true] {
+    --normal-bg: var(--toast-bg);
+    --normal-border: var(--toast-border);
+    --normal-text: var(--toast-text);
+}

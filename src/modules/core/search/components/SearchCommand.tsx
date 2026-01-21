@@ -14,6 +14,7 @@ import { Command } from 'cmdk';
 import { Search, FileText, Loader2, X } from 'lucide-react';
 import { useDocumentSearch } from '../hooks/useSearch';
 import { SearchResultItem } from './SearchResultItem';
+import { SearchEmptyState } from '@/components/ui/empty-states';
 
 interface SearchCommandProps {
     isOpen: boolean;
@@ -88,22 +89,17 @@ export function SearchCommand({ isOpen, onOpenChange }: SearchCommandProps) {
                     </div>
 
                     <Command.List className="max-h-[60vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
-                        <Command.Empty className="py-12 text-center">
+                        <Command.Empty>
                             {query.length < 2 ? (
-                                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                                <div className="py-12 text-center text-gray-500 dark:text-gray-400 text-sm">
                                     Type at least 2 characters to search...
-                                </p>
-                            ) : isLoading ? (
-                                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                    Searching...
-                                </p>
-                            ) : (
-                                <div className="space-y-2">
-                                    <p className="text-gray-900 dark:text-white font-medium">No results found</p>
-                                    <p className="text-gray-500 dark:text-gray-400 text-xs">
-                                        Try searching for another term
-                                    </p>
                                 </div>
+                            ) : isLoading ? (
+                                <div className="py-12 text-center text-gray-500 dark:text-gray-400 text-sm">
+                                    Searching...
+                                </div>
+                            ) : (
+                                <SearchEmptyState query={query} />
                             )}
                         </Command.Empty>
 

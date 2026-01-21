@@ -54,12 +54,10 @@ function LeadListBlockRenderer(props: {
             data-block-id={props.block.id}
         >
             <LeadListWidget
-                workspaceId={workspaceId}
                 config={{
-                    filterStatus: props.block.props.filterStatus,
-                    limit: props.block.props.limit
+                    filterStatus: props.block.props.filterStatus === 'all' ? undefined : [props.block.props.filterStatus as any],
+                    maxItems: props.block.props.limit
                 }}
-                blockId={props.block.id}
             />
         </div>
     )

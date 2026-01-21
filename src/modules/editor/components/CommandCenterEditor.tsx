@@ -17,11 +17,14 @@ import '@blocknote/mantine/style.css';
 
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/lib/hooks/useDebounce';
-import { saveDocumentContent } from '../actions/documentActions';
+import { saveDocument } from '../actions/documentActions';
 import { widgetBlockSchema, insertWidgetBlock } from '../blocks/widgetBlockSchema';
 import { getCustomSlashMenuItems } from './SlashMenuItems';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import { WidgetPicker } from './WidgetPicker';
+import { EditableDocumentTitle } from '@/modules/core/documents/components';
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcuts';
+import { toast } from 'sonner';
 
 interface CommandCenterEditorProps {
     documentId?: string;
@@ -90,7 +93,7 @@ export function CommandCenterEditor({
 
         onSaveStatusChange?.('saving');
         try {
-            const result = await saveDocumentContent({
+            const result = await saveDocument({
                 documentId,
                 content: content as any,
             });
@@ -111,6 +114,14 @@ export function CommandCenterEditor({
 
     const { debouncedFn: debouncedSave } = useDebounce(performSave, debounceMs);
 
+    // Manual save shortcut (Cmd+S)
+    const handleSaveShortcut = useCallback(() => {
+        performSave(editor.document);
+        toast.success('Document saved');
+    }, [editor, performSave]);
+
+    useKeyboardShortcut('s', handleSaveShortcut, { meta: true, ctrl: true });
+
     // Handle content changes
     const handleChange = useCallback(() => {
         onSaveStatusChange?.('unsaved');
@@ -123,9 +134,11 @@ export function CommandCenterEditor({
             {/* Editor Toolbar/Header */}
             <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-md">
-                        {title}
-                    </h1>
+                    <EditableDocumentTitle
+                        documentId={documentId}
+                        initialTitle={title}
+                        className="text-xl font-bold"
+                    />
 
                     {/* Insert Widget Button */}
                     <button

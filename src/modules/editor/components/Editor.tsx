@@ -10,10 +10,13 @@ import {
 import { PartialBlock } from '@blocknote/core'
 import '@blocknote/mantine/style.css'
 import { useDebounce } from '@/lib/hooks/useDebounce'
-import { saveDocumentContent } from '../actions/documentActions'
+import { saveDocument } from '../actions/documentActions'
 import { customSchema, CustomSchema } from '../schema'
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcuts'
+import { toast } from 'sonner'
 import { getCustomSlashMenuItems } from './SlashMenuItems'
 import { SaveStatusIndicator } from './SaveStatusIndicator'
+import { EditableDocumentTitle } from '@/modules/core/documents/components'
 
 interface EditorProps {
     documentId: string
@@ -42,7 +45,7 @@ export function Editor({
     const performSave = useCallback(async (content: any) => {
         onSaveStatusChange?.('saving')
         try {
-            const result = await saveDocumentContent({
+            const result = await saveDocument({
                 documentId,
                 content,
             })
@@ -62,6 +65,14 @@ export function Editor({
 
     const { debouncedFn: debouncedSave } = useDebounce(performSave, 1000)
 
+    // Manual save shortcut (Cmd+S)
+    const handleSaveShortcut = useCallback(() => {
+        performSave(editor.document)
+        toast.success('Document saved')
+    }, [editor, performSave])
+
+    useKeyboardShortcut('s', handleSaveShortcut, { meta: true, ctrl: true })
+
     // Handle content changes
     const handleChange = useCallback(() => {
         onSaveStatusChange?.('unsaved')
@@ -72,9 +83,10 @@ export function Editor({
         <div className="flex flex-col h-full">
             {/* Editor Header */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white">
-                <h1 className="text-lg font-semibold text-gray-900 truncate">
-                    {title}
-                </h1>
+                <EditableDocumentTitle
+                    documentId={documentId}
+                    initialTitle={title}
+                />
                 <SaveStatusIndicator
                     isSaving={false}
                     lastSaved={null}
@@ -99,7 +111,7 @@ export function Editor({
                                 return items.filter(
                                     (item) =>
                                         item.title.toLowerCase().includes(query.toLowerCase()) ||
-                                        item.aliases?.some((alias) =>
+                                        item.aliases?.some((alias: string) =>
                                             alias.toLowerCase().includes(query.toLowerCase())
                                         )
                                 )

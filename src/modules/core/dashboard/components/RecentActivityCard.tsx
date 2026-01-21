@@ -7,6 +7,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ActivityItem } from '../types';
 import Link from 'next/link';
+import { RecentActivityEmptyState } from '@/components/ui/empty-states';
 
 interface RecentActivityCardProps {
     activity: ActivityItem[];
@@ -20,9 +21,7 @@ export function RecentActivityCard({ activity }: RecentActivityCardProps) {
             </div>
             <div className="flex-1 p-6">
                 {activity.length === 0 ? (
-                    <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No recent activity recorded.
-                    </div>
+                    <RecentActivityEmptyState />
                 ) : (
                     <div className="space-y-6">
                         {activity.map((item) => (

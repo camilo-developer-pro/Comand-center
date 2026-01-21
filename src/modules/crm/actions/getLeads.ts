@@ -78,6 +78,7 @@ export async function getLeads(
 
     return {
         success: true,
-        data: leads ?? []
+        data: leads ?? [],
+        count: leads?.length ?? 0
     }
 }

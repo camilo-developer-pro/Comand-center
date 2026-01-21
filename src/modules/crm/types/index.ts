@@ -11,6 +11,9 @@
 // ============================================================
 
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost';
+export type LeadStatusFilter = LeadStatus | 'all';
+
+export type GetLeadsResponse = LeadsQueryResult;
 
 export interface Lead {
     id: string;

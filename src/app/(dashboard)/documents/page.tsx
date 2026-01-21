@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { EmptyState } from '@/components/ui';
+import { DocumentsEmptyState } from '@/components/ui/empty-states';
 
 /**
  * Documents List Page
@@ -27,10 +29,16 @@ export default async function DocumentsPage() {
     if (!workspaceId) {
         return (
             <div className="p-8">
-                <div className="max-w-4xl mx-auto text-center py-12 bg-white rounded-lg border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Workspace not found</h3>
-                    <p className="text-gray-500 mb-4">Please contact your administrator or join a workspace.</p>
-                </div>
+                <EmptyState
+                    icon={
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    }
+                    title="Workspace not found"
+                    description="Please contact your administrator or join a workspace."
+                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"
+                />
             </div>
         );
     }
@@ -51,7 +59,7 @@ export default async function DocumentsPage() {
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Documents</h1>
                     <Link
                         href="/documents/new"
                         className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
@@ -67,31 +75,17 @@ export default async function DocumentsPage() {
                             <Link
                                 key={doc.id}
                                 href={`/documents/${doc.id}`}
-                                className="block p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all"
+                                className="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-sm transition-all"
                             >
-                                <h3 className="font-medium text-gray-900">{doc.title}</h3>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <h3 className="font-medium text-gray-900 dark:text-white">{doc.title}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     Last edited: {new Date(doc.updated_at).toLocaleDateString()}
                                 </p>
                             </Link>
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                        <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                            <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
-                        <p className="text-gray-500 mb-4">Create your first document to get started.</p>
-                        <Link
-                            href="/documents/new"
-                            className="inline-flex px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
-                        >
-                            Create Document
-                        </Link>
-                    </div>
+                    <DocumentsEmptyState />
                 )}
             </div>
         </div>

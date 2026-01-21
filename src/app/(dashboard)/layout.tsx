@@ -9,7 +9,6 @@
 import { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
     title: 'Dashboard - Command Center',
@@ -35,9 +34,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     {children}
                 </main>
             </div>
-
-            {/* Toast Notifications */}
-            <Toaster position="top-right" richColors closeButton />
         </div>
     );
 }

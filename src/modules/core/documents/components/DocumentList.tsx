@@ -10,6 +10,7 @@
 
 import { DocumentListItem } from './DocumentListItem';
 import type { Document } from '../types';
+import { DocumentsEmptyState } from '@/components/ui/empty-states';
 
 interface DocumentListProps {
     documents: Document[];
@@ -40,13 +41,7 @@ export function DocumentList({ documents, activeDocumentId, isLoading }: Documen
 
     // Empty state
     if (documents.length === 0) {
-        return (
-            <div className="px-3 py-8 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No documents yet
-                </p>
-            </div>
-        );
+        return <DocumentsEmptyState />;
     }
 
     // Document list
