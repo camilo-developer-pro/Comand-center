@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-01-21: Stability Hotfix - Workspace Access & RLS Recursion Resolved
+
+### Accomplishments
+- **RLS Recursion Fixed:**
+  - Resolved "infinite recursion detected" in `workspace_members` and `workspaces` tables.
+  - Implemented unidirectional security policies that break cross-table dependency cycles.
+  - Optimized `is_super_admin()` to check JWT claims directly instead of querying the `profiles` table.
+
+- **Workspace Resolution Logic:**
+  - Updated `getCurrentUser` with "God-Mode" fallback for Super Admins.
+  - Added automatic "Auto-Join" for admins to the first available workspace if none is assigned.
+  - Improved resilience of `DocumentsPage` by resolving workspace ID via server actions instead of direct client queries.
+
+- **Document Creation Stability:**
+  - Fixed a missing `created_by` field in `createDocument` server action that was violating database constraints.
+
+- **Hotfix Infrastructure:**
+  - Created `00011_rls_recursion_hotfix.sql` migration for repository-level tracking.
+  - Updated `authActions.ts` with comprehensive logging for workspace resolution failures.
+
+### Technical Highlights
+- JWT-based admin verification eliminates database round-trips for permission checks.
+- Linear RLS structure prevents PostgreSQL query engine loops.
+- Server-side workspace assignment ensures zero-config dashboard loading for new admins.
+
+### Files Created/Modified
+- `src/modules/core/auth/actions/authActions.ts`
+- `src/app/(dashboard)/documents/page.tsx`
+- `src/modules/editor/actions/documentActions.ts`
+- `supabase/migrations/00011_rls_recursion_hotfix.sql`
+- `project_log.md`
+- `walkthrough.md`
+
+---
+
 ## 2026-01-21: V1.1 Phase 6 - Optimistic UI & Polish Complete
 
 ### Accomplishments

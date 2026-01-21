@@ -223,6 +223,7 @@ export async function createDocument(
                 title,
                 content: [],
                 workspace_id: workspaceId,
+                created_by: user.id,
             })
             .select()
             .single();

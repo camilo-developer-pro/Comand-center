@@ -360,7 +360,7 @@ export async function getCurrentUser() {
             console.warn('[authActions] is_super_admin RPC check failed:', e);
         }
 
-        // Get default workspace
+        // Get default workspace or fallback to the first one they are a member of
         let workspace = null;
         if (profile?.default_workspace_id) {
             const { data: ws } = await supabase
@@ -369,6 +369,53 @@ export async function getCurrentUser() {
                 .eq('id', profile.default_workspace_id)
                 .single();
             workspace = ws;
+        }
+
+        // Fallback: If no workspace is set, try to find one via membership or global access
+        if (!workspace) {
+            console.log('[authActions] No default workspace, attempting fallback search...');
+
+            // 1. Try to find any membership
+            const { data: membershipData } = await supabase
+                .from('workspace_members')
+                .select('workspace_id')
+                .eq('user_id', user.id)
+                .limit(1);
+
+            if (membershipData && membershipData.length > 0) {
+                const { data: ws } = await supabase
+                    .from('workspaces')
+                    .select('*')
+                    .eq('id', membershipData[0].workspace_id)
+                    .single();
+
+                if (ws) {
+                    workspace = ws;
+                    console.log('[authActions] Resolved workspace via membership:', workspace.name);
+                }
+            }
+
+            // 2. Super Admin fallback: Just pick the first workspace in the system
+            if (!workspace && isSuperAdmin) {
+                console.log('[authActions] Super Admin fallback: searching global workspaces...');
+                const { data: allWs } = await supabase
+                    .from('workspaces')
+                    .select('*')
+                    .limit(1);
+
+                if (allWs && allWs.length > 0) {
+                    workspace = allWs[0];
+                    console.log('[authActions] Resolved workspace via Super Admin fallback:', workspace.name);
+                }
+            }
+
+            // 3. If we found one, update the profile default so this doesn't run every time
+            if (workspace && profile) {
+                await supabase
+                    .from('profiles')
+                    .update({ default_workspace_id: workspace.id })
+                    .eq('id', user.id);
+            }
         }
 
         return {

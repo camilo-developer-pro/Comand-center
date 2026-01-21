@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getCurrentUser } from '@/modules/core/auth/actions/authActions';
 import { createClient } from '@/lib/supabase/server';
 import { EmptyState } from '@/components/ui';
 import { DocumentsEmptyState } from '@/components/ui/empty-states';
@@ -8,23 +9,13 @@ import { DocumentsEmptyState } from '@/components/ui/empty-states';
  * Displays all documents in the user's workspace.
  */
 export default async function DocumentsPage() {
-    const supabase = await createClient();
-
-    // Get current user's profile to find their workspace
-    const { data: { user } } = await supabase.auth.getUser();
+    const userData = await getCurrentUser();
+    const user = userData?.user;
+    const workspaceId = userData?.workspace?.id;
 
     if (!user) {
         return null; // Layout handles redirect
     }
-
-    // Get user's workspace membership
-    const { data: membership } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .eq('user_id', user.id)
-        .single();
-
-    const workspaceId = membership?.workspace_id;
 
     if (!workspaceId) {
         return (
@@ -36,12 +27,18 @@ export default async function DocumentsPage() {
                         </svg>
                     }
                     title="Workspace not found"
-                    description="Please contact your administrator or join a workspace."
+                    description="You are not currently in a workspace. Please join one or create a new one to get started."
                     className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"
+                    action={{
+                        label: 'Create Workspace',
+                        href: '/settings',
+                    }}
                 />
             </div>
         );
     }
+
+    const supabase = await createClient();
 
     // Fetch documents for the workspace
     const { data: documents, error } = await supabase
