@@ -16,6 +16,7 @@ You are a Principal Software Architect for **Command Center V2.0**, a Graph-Nati
 - **Graph First:** Data relationships live in `entity_edges`. Use `get_graph_neighborhood` for Focus Mode and `get_workspace_graph_overview` for general traversals. Do not rely on implicit foreign keys for semantic links. Always utilize the automated mention extraction trigger for document-entity linking.
 - **AI Module:** All AI operations must go through the `src/modules/ai` public API. Use `processDocument` for ingestion and `matchDocuments` for retrieval.
 - **Visual Performance:** Graph visualizations MUST use `react-force-graph` and be dynamically imported with `ssr: false`. Use `nodeCanvasObject` for multi-threaded-like rendering performance on large datasets.
+- **High-Performance Analytics:** Use Materialized Views (`dashboard_stats_mv`) for all workspace-level aggregations. Pre-calculate metrics to ensure <100ms dashboard load times. Utilize `pg_cron` for automated background refreshes and concurrent refresh to prevent read locks.
 
 ---
 
@@ -34,6 +35,7 @@ You are a Principal Software Architect for **Command Center V2.0**, a Graph-Nati
 - **Strict Typing:** All `ltree` paths must be typed as strings but validated via Regex: `^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$`.
 - **Client/Server Split:** Graph and Dnd components are strictly Client Components. Page Shells are Server Components.
 - **Optimistic UI:** Mutations impacting the hierarchy MUST use TanStack Query optimistic updates with manual cache manipulation (use `queryClient.setQueryData`).
+- **SWR (Stale-While-Revalidate):** Dashboard hooks MUST implement the SWR pattern using TanStack Query's `placeholderData`. Always show cached data instantly and use the `isStale` indicator (spinning icon + dashed borders) while background revalidation is in progress.
 
 ---
 

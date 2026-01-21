@@ -12,7 +12,9 @@ import type {
     DashboardStats,
     DashboardActionResult,
     ActivityItem,
-    GrowthDataPoint
+    GrowthDataPoint,
+    DashboardStatsFromMV,
+    DashboardStatsResponse
 } from '../types';
 
 // ============================================================
@@ -174,5 +176,111 @@ export async function getDocumentGrowth(): Promise<DashboardActionResult<GrowthD
             success: false,
             error: error instanceof Error ? error.message : 'Failed to fetch growth data'
         };
+    }
+}
+
+// ============================================================
+// V2.0: Materialized View Actions
+// ============================================================
+
+/**
+ * Fetches dashboard statistics from the Materialized View
+ * Uses Supabase RPC to call get_dashboard_stats function
+ * 
+ * V2.0: High-performance stats via pre-aggregated materialized view
+ */
+export async function getDashboardStatsFromMV(
+    workspaceId: string
+): Promise<DashboardStatsResponse> {
+    const supabase = await createClient();
+
+    try {
+        // Validate input
+        if (!workspaceId) {
+            return {
+                success: false,
+                error: 'Workspace ID is required',
+                code: 'UNAUTHORIZED',
+            };
+        }
+
+        // Call RPC function (validates membership internally)
+        const { data, error } = await supabase.rpc('get_dashboard_stats', {
+            target_workspace_id: workspaceId,
+        });
+
+        if (error) {
+            console.error('[Dashboard Action] RPC Error:', error);
+
+            if (error.message.includes('Access denied')) {
+                return {
+                    success: false,
+                    error: 'You do not have access to this workspace',
+                    code: 'UNAUTHORIZED',
+                };
+            }
+
+            return {
+                success: false,
+                error: error.message,
+                code: 'SERVER_ERROR',
+            };
+        }
+
+        if (!data || data.length === 0) {
+            return {
+                success: false,
+                error: 'No stats found for this workspace',
+                code: 'NOT_FOUND',
+            };
+        }
+
+        // Transform snake_case to camelCase
+        const stats: DashboardStatsFromMV = {
+            workspaceId: data[0].workspace_id,
+            workspaceName: data[0].workspace_name,
+            totalPipelineValue: Number(data[0].total_pipeline_value) || 0,
+            totalWonValue: Number(data[0].total_won_value) || 0,
+            totalLeads: Number(data[0].total_leads) || 0,
+            newLeadsCount: Number(data[0].new_leads_count) || 0,
+            wonLeadsCount: Number(data[0].won_leads_count) || 0,
+            totalDocuments: Number(data[0].total_documents) || 0,
+            activeDocumentsCount: Number(data[0].active_documents_count) || 0,
+            lastRefreshedAt: data[0].last_refreshed_at,
+        };
+
+        return {
+            success: true,
+            data: stats,
+        };
+    } catch (err) {
+        console.error('[Dashboard Action] Unexpected Error:', err);
+        return {
+            success: false,
+            error: 'An unexpected error occurred',
+            code: 'SERVER_ERROR',
+        };
+    }
+}
+
+/**
+ * Manually triggers a refresh of the Materialized View
+ * Note: This is optional - pg_cron handles automatic refresh
+ */
+export async function refreshDashboardStatsMV(): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createClient();
+
+    try {
+        const { error } = await supabase.rpc('refresh_dashboard_stats');
+
+        if (error) {
+            console.error('[Dashboard Action] Refresh Error:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (err) {
+        console.error('[Dashboard Action] Refresh Unexpected Error:', err);
+        return { success: false, error: 'Failed to refresh stats' };
     }
 }
