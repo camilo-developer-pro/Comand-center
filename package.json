@@ -10,7 +10,8 @@
     "db:types": "npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/database.types.ts",
     "db:types:local": "npx supabase gen types typescript --local > src/types/database.types.ts",
     "db:push": "npx supabase db push",
-    "db:reset": "npx supabase db reset"
+    "db:reset": "npx supabase db reset",
+    "test": "vitest"
   },
   "dependencies": {
     "@blocknote/core": "^0.46.1",

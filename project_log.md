@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-01-21: V2.1 Phase 1.1 - Fractional Indexing Base
+
+### Accomplishments
+- **Database Layer (Fractional Indexing):**
+  - Created reversible migration `20250121_001_add_rank_key_column.sql`.
+  - Added `rank_key` column with `COLLATE "C"` for deterministic lexicographical sorting.
+  - Implemented `items_unique_rank_per_parent` unique constraint (deferrable) for collision prevention.
+  - Created `idx_items_parent_rank_key` for high-performance sibling ordering.
+- **Core Algorithms (PL/pgSQL):**
+  - Implemented `fi_generate_key_between` for O(1) midpoint calculation (Base62).
+  - Developed `generate_item_rank_key` wrapper for effortless sibling reordering.
+  - Added Base62 utility functions (`fi_get_alphabet`, `fi_char_at`, `fi_index_of`).
+- **Data Normalization (Backfill):**
+  - Created `20250121_003_backfill_rank_keys.sql` to transform legacy integer ranks.
+  - Developed `initialize_rank_keys()` for workspace-isolated order preservation.
+  - Applied `NOT NULL` constraints and default values post-verification.
+- **Index Optimization (V2.1 Tuning):**
+  - Created `20250121_005_optimize_indexes.sql` for deep hierarchy support.
+  - Implemented `siglen=256` GiST optimization to reduce path collision lossiness.
+  - Added B-Tree `path` index for exact matches and breadcrumb range scans.
+  - Deployed composite `(parent_id, rank_key)` index for O(log N) reordering lookups.
+  - Standardized `item_type` workspace partitioning for multi-tenant scalability.
+- **Verification & Documentation:**
+  - Developed `verify_rank_key.sql` for automated migration validation.
+  - Created `test_fractional_indexing_functions.sql` for algorithm unit testing.
+  - Created `README_rank_key_migration.md` with deep-dive technical specs and instructions.
+  - Built `apply_migration.ps1` PowerShell utility for automated SQL-to-clipboard and CLI interaction.
+
+### Architecture Highlights
+- **O(1) Reordering:** Transitioning from integer `rank` to string `rank_key` to eliminate database write-locks during bulk moves.
+- **Byte-by-Byte Comparison:** Explicitly using `COLLATE "C"` to ensure Base62 midpoint logic works across all locales.
+- **Zero-Downtime Design:** Migration keeps column nullable during transition period to allow for safe backfill.
+
+### Files Created/Modified
+- `supabase/migrations/20250121_001_add_rank_key_column.sql`
+- `supabase/migrations/verify_rank_key.sql`
+- `supabase/migrations/README_rank_key_migration.md`
+- `supabase/migrations/apply_migration.ps1`
+
+---
+
 ## 2026-01-21: V2.0 Phase 4.3 - Neural Graph Integration
 
 ### Accomplishments
@@ -248,7 +289,15 @@
 ### Accomplishments
 - **Database Schema (Ltree):**
   - Implemented `items` table using PostgreSQL `ltree` for materialized paths.
-  - Added GiST and B-tree indexes for high-performance subtree queries.
+- **Phase 1.5: Index Optimization** (2025-01-21)
+  - Applied GiST (`siglen=256`) and B-Tree indexes for O(1) performance.
+  - Verified index usage via `EXPLAIN ANALYZE`.
+- **Phase 1.6: Algorithm Refinement & Verification** (2025-01-21)
+  - Created `20250121_006_test_helpers.sql` to bypass RLS during Vitest execution (using `SECURITY DEFINER`).
+  - Fixed `generate_item_rank_key` to correctly handle `NULL` parents (`IS NOT DISTINCT FROM`).
+  - Refined `fi_generate_key_between` with prepending logic to allow infinite expansion and prevent recursion overflows.
+  - Verified 100% test pass rate for insertion, reordering, and stress testing.
+  - Completed Phase 1 (Database & Hierarchy) of the Command Center V2.1 roadmap.
   - Implemented automatic path generation and validation via triggers.
   - Created reversible migration with data backfill for existing documents.
 - **Atomic Subtree Movement:**
