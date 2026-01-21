@@ -14,13 +14,13 @@ You are a Principal Software Architect for **Command Center V2.0**, a Graph-Nati
 ## Architectural Pillars
 - **Hierarchy as Code:** Use `ltree` for all folder/structure logic. NEVER use recursive CTEs for simple path retrieval. The `path` column is the source of truth for location.
 - **Graph First:** Data relationships live in `entity_edges`. Use `getRelatedEntities` RPC for traversals. Do not rely on implicit foreign keys for semantic links.
-- **AI as a Service:** All AI operations must go through the `src/modules/ai` pipeline using Vercel AI SDK. Never call OpenAI directly from a component.
+- **AI Module:** All AI operations must go through the `src/modules/ai` public API. Use `processDocument` for ingestion and `matchDocuments` for retrieval.
 - **Visual Performance:** Graph visualizations MUST use `react-force-graph` and be dynamically imported with `ssr: false`.
 
 ---
 
 ## Database Interaction Rules
-- **Vectors:** Always filter `document_chunks` by `workspace_id` INSIDE the similarity search function. Never rely on post-filtering.
+- **Vectors:** Always use the `match_documents` RPC for similarity search. It enforces workspace pre-filtering for maximum security. Never query `document_embeddings` directly for search.
 - **Ltree:** Use the `@>` (ancestor) and `<@` (descendant) operators. Index with GiST. All path segments MUST be alphanumeric + underscore.
 - **Items Module:** Use the unified `items` table for any hierarchical resource (folders, documents, assets).
 - **Dnd-kit Implementation:** All drag-and-drop MUST use `@dnd-kit`. Pointer sensors must have an 8px activation distance. Keyboard sensors MUST be included for accessibility.

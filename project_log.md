@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-01-21: V2.0 Phase 2 - Semantic Brain (RAG) Complete
+
+### Accomplishments
+- **Vector Infrastructure:** Established `document_embeddings` table and HNSW index for OpenAI embeddings.
+- **Secure Retrieval:** Implemented `match_documents` RPC with mandatory workspace isolation and search path protection.
+- **Processing Pipeline:** Built BlockNote-to-Markdown converter, hierarchical chunker, and content enrichment service.
+- **Orchestration:** Developed Next.js Server Actions for idempotent document ingestion and semantic search.
+- **Public API:** Created a minimal barrel API (`src/modules/ai/index.ts`) for clean cross-module usage.
+- **Verification:** 100% test coverage for the conversion pipeline and verified TypeScript strict mode compliance.
+
+### Files Created/Modified
+- `src/modules/ai/` (actions, lib, queries, services, types, utils, barrel)
+- `supabase/migrations/00012_document_embeddings.sql`
+- `supabase/migrations/00013_vector_search_rpc.sql`
+
+---
+
+
 ## 2026-01-21: V2.0 Phase 1 - Hierarchical File System Complete
 
 ### Accomplishments
