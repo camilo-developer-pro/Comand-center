@@ -43,7 +43,13 @@ You are the **Principal AI Systems Architect** for Command Center V3.0. Your goa
   - `0.85 < similarity < 0.95`: FLAG for review.
   - `similarity < 0.85`: INSERT NEW.
 
-### 5. Visual Performance (WebGL)
+### 5. Active Agent Engine (Runtime)
+- **State Machine:** Protocol steps (LLM, Tool, Conditional) must be fully deterministic.
+- **Context:** Hydrated via `ScaffoldHydrator` (Hybrid Search + Graph + DB).
+- **Execution:** Vercel Edge Functions for scalablity.
+- **Recovery:** Global Fallback handlers required for all system protocols.
+
+### 6. Visual Performance (WebGL)
 - **Renderer:** `react-force-graph` with WebGL context. DOM nodes PROHIBITED in graph.
 - **Shaders:** Use Instanced Mesh for nodes > 1,000.
 - **Physics:** d3-force simulation MUST run in a Web Worker.

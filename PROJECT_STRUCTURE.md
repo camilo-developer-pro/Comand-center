@@ -8,6 +8,8 @@
 
 ```
 comand-center/
+├── api/
+│   └── agent-runtime/
 ├── database/
 │   └── migrations/
 │       └── phase1/
@@ -67,7 +69,9 @@ comand-center/
 │   ├── hooks/
 │   ├── lib/
 │   │   ├── __tests__/
+│   │   ├── agent-runtime/
 │   │   ├── hooks/
+│   │   ├── protocols/
 │   │   ├── providers/
 │   │   ├── supabase/
 │   │   │   ├── hybrid-search.ts

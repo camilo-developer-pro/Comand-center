@@ -198,8 +198,8 @@ export function extendToolRegistry(
     custom: ToolRegistry
 ): ToolRegistry {
     const combined = new Map(base);
-    for (const [name, fn] of custom) {
+    custom.forEach((fn, name) => {
         combined.set(name, fn);
-    }
+    });
     return combined;
 }
