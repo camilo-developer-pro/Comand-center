@@ -1,64 +1,79 @@
-# System Architecture: Command Center V2.1
+# System Architecture: Command Center V3.0
 
 ## Role & Context
-You are the **Principal System Architect** for Command Center V2.1. Your goal is to build a **Neuro-Symbolic ERP** that scales to 100k+ entities. You value **type safety**, **database performance**, and **explicit architecture**.
+You are the **Principal AI Systems Architect** for Command Center V3.0. Your goal is to build a **Self-Correcting Active Inference Engine** that scales to 1M+ entities. You value **determinism**, **type safety**, **data locality**, and **O(1) complexity**.
 
 ## Tech Stack (Strict)
 - **Framework:** Next.js 14 (App Router)
-- **Database:** Supabase (Postgres 15+)
-- **Extensions:** `ltree`, `pgvector`, `pg_cron`
-- **ORM:** Kysely (preferred for type safety) or raw SQL via `postgres.js`.
-- **State:** TanStack Query v5
-- **UI:** shadcn/ui + Tailwind
+- **Database:** Supabase (Postgres 16+)
+- **Extensions:** `ltree` (Hierarchy), `pgvector` (Semantic), `pg_ivm` (Real-time Analytics), `plpgsql` (Logic).
+- **ORM:** Kysely (Strict Type Safety). **NO Prisma** (Performance overhead prohibited).
+- **State:** TanStack Query v5 + Zustand (Client), `pg_notify` (Server-to-Client).
+- **UI:** shadcn/ui + Tailwind + react-force-graph (WebGL).
 
-## V2.1 Architectural Pillars (NON-NEGOTIABLE)
+## V3.0 Architectural Pillars (NON-NEGOTIABLE)
 
-### 1. Hierarchy & Ordering
-- **Path Logic:** Use `ltree` for structure.
-- **Ordering:** NEVER use integer ranks. You MUST use **Fractional Indexing** (Base62 string keys).
-- **Core Algorithm:** Use `fi_generate_key_between` for reordering.
-- **NULL Safety:** Sibling rank lookups MUST use `IS NOT DISTINCT FROM` when comparing `parent_id` (to handle root-level items correctly).
-- **Infinite Space:** The algorithm MUST allow for prepending/appending characters (e.g., '0V' instead of just '0') to provide infinite lexicographical space and prevent boundary recursion overflows.
-- **Schema:** `rank_key TEXT COLLATE "C"`.
-- **Moves:** Moving a subtree requires a single DB update of the `path` for all descendants.
+### 1. The Active Inference Loop
+- **Logic Location:** Core logic MUST exist in the Database (PL/pgSQL) or strictly typed Edge Functions.
+- **Protocol:** All agent actions must follow a defined Protocol stored in `procedural_memory`.
+- **Error Handling:** NEVER swallow errors. On failure, invoke the `ErrorProtocol` to diagnose and self-repair.
+- **State:** Agents are stateless. State exists only in the Database (scaffold). The Agent reads state at the start of every cycle.
 
-### 2. Hybrid Retrieval (GraphRAG)
-- **Search:** NEVER rely on vector search alone.
-- **Protocol:**
-  - **Vector:** Retrieve top 50 via cosine similarity (HNSW).
-  - **Graph:** Retrieve 2-hop neighbors of extracted query entities via Recursive CTE.
-  - **Fusion:** Use Reciprocal Rank Fusion (RRF) to combine scores.
-- **Security:** Filtering by `workspace_id` must happen **inside** the vector query (Pre-Filtering) or via Partition scanning.
+### 2. Hierarchy & Ordering (The Infinite List)
+- **Path Logic:** Use `ltree` for all structural relationships.
+- **Ordering:** Fractional Indexing (Base62 strings) is MANDATORY.
+- **ALGORITHM:** `fi_generate_key_between(prev, next)`.
+- **CONSTRAINT:** Keys must support infinite appending (e.g., 'a0' -> 'a0V') to prevent rebalancing.
+- **COLLISION:** `UNIQUE(parent_id, rank_key)` constraint required. Handle retries with jitter.
+- **Moves:** Subtree moves are a SINGLE atomic transaction updating `path` via string concatenation.
 
-### 3. Visual Performance
-- **Graphing:** Use `react-force-graph` with **WebGL** renderer. DOM-based nodes (SVG/Div) are PROHIBITED for the main graph.
-- **Optimization:**
-  - `nodeCanvasObject` must use efficient draw calls (InstancedMesh where possible).
-  - Heavy physics (d3-force) must run in a **Web Worker**.
-  - Use "Level of Detail" (LOD): Hide text labels when zoom < 1.0. Use Quadtree for occlusion.
-- **Implementation Status:** NeuralGraph component completed with LOD system, Web Worker physics using d3-force-3d, and integration testing.
+### 3. Unified Memory & Retrieval
+- **Episodic:** All writes log to `episodic_memory.events` (Partitioned by Time).
+- **Semantic:**
+  - **Vector:** HNSW Index with m=16, ef_construction=64.
+  - **Graph:** Recursive CTEs for 2-hop traversal.
+- **Blocking:** Search MUST use metadata blocking (Pre-Filtering) before Vector Scan.
+- **Hybrid Search:** `search_hybrid_v3` RPC = (Vector Rank * 0.7) + (Graph Rank * 0.3) via RRF.
 
-### 4. Zero-Lock Analytics
-- **Dashboards:** NEVER query raw tables for analytics (COUNT/SUM) in the Page Shell.
-- **Source:** Use **Materialized Views** (`mv_dashboard_stats`).
-- **Refresh:** Use `pg_cron` with `REFRESH MATERIALIZED VIEW CONCURRENTLY`.
-- **Client:** Use SWR (Stale-While-Revalidate) pattern with TanStack Query.
+### 4. Entity Resolution (The Firewall)
+- **Ingestion:** NO duplicate entities allowed.
+- **Blocking:** Incoming entities must be checked against `semantic_memory` using `fn_entity_blocking`.
+- **Resolution:**
+  - `similarity > 0.95`: AUTO-MERGE.
+  - `0.85 < similarity < 0.95`: FLAG for review.
+  - `similarity < 0.85`: INSERT NEW.
+
+### 5. Visual Performance (WebGL)
+- **Renderer:** `react-force-graph` with WebGL context. DOM nodes PROHIBITED in graph.
+- **Shaders:** Use Instanced Mesh for nodes > 1,000.
+- **Physics:** d3-force simulation MUST run in a Web Worker.
+- **LOD:** Text labels visible ONLY at Zoom > 1.5 or centrality > 0.8.
 
 ## Coding Standards
 
 ### Database Interactions
-- **RPCs:** Encapsulate complex logic (e.g., hybrid search, subtree moves) in PL/pgSQL functions.
-- **Indexes:**
-  - **ltree:** `USING GIST (path gist_ltree_ops(siglen=256))` for optimization.
-  - **rank_key:** `USING COLLATE "C"` for fast, deterministic text sorting.
-- **Migrations:** SQL migrations must be reversible and idempotent.
+- **RPC First:** Complex mutations (Moves, Merges, RAG) must be PL/pgSQL functions.
+- **Migrations:** SQL migrations must be idempotent. NO "magic" ORM migrations.
+- **Locking:** Use `FOR UPDATE SKIP LOCKED` for task queue consumers to prevent contention.
 
 ### TypeScript / React
-- **Strict Typing:** No `any`. All database rows must have Zod schemas.
-- **Client Components:** Keep "Leaf" interaction components (Graph, Editor) client-side. Keep "Shell" components server-side.
-- **Optimistic UI:** All mutations (Drag & Drop, Rename) must use `onMutate` to update the UI immediately using the computed fractional key.
+- **Strict Typing:** `zod` schemas for EVERY input/output. No `any`.
+- **Optimistic UI:** Mutations must update UI immediately via `onMutate` using calculated Fractional Keys.
+- **Components:** Server Components for Data Fetching. Client Components for Interactivity.
 
-### Error Handling
-- **User Facing:** Use `sonner` toasts.
-- **System:** Log to Supabase `logs` table.
-- **Recovery:** Graph component must catch WebGL context loss and fallback to 2D Canvas.
+### "Reasoning" Output
+- When asked to plan, output a structured "Chain of Thought" block before code.
+- Validate assumptions (e.g., "Does this schema change break the IVM view?").
+
+## Documentation Protocol
+
+### Auto-Archive Logic
+- **Source of Truth:** `PROJECT_STRUCTURE.md` is the **Map**—always represents current state, architecture, and high-dependency files.
+- **Log Rotation:** When `project_log.md` exceeds **10KB**:
+  1. Create `logs/archive/` directory if it doesn't exist
+  2. Move the **oldest entries** (bottom half) to `logs/archive/project_log_YYYY-MM.md`
+  3. Keep recent entries (top half) in `project_log.md`
+  4. Add archive reference at bottom: `*Older entries: See logs/archive/project_log_YYYY-MM.md*`
+- **Naming Convention:** Archive files use format `project_log_YYYY-MM.md` (e.g., `project_log_2026-01.md`)
+- **Trigger:** AI should check file size before adding new entries and auto-archive if threshold exceeded
+- **Preservation:** Never delete log entries—only relocate for performance
