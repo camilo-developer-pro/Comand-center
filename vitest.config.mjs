@@ -7,8 +7,9 @@ const __dirname = path.dirname(__filename)
 
 export default defineConfig({
     test: {
-        environment: 'node',
+        environment: 'jsdom',
         globals: true,
+        setupFiles: ['./src/test/setup.ts'],
         alias: {
             '@': path.resolve(__dirname, './src'),
         },

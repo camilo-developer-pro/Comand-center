@@ -36,6 +36,7 @@ You are the **Principal System Architect** for Command Center V2.1. Your goal is
   - `nodeCanvasObject` must use efficient draw calls (InstancedMesh where possible).
   - Heavy physics (d3-force) must run in a **Web Worker**.
   - Use "Level of Detail" (LOD): Hide text labels when zoom < 1.0. Use Quadtree for occlusion.
+- **Implementation Status:** NeuralGraph component completed with LOD system, Web Worker physics using d3-force-3d, and integration testing.
 
 ### 4. Zero-Lock Analytics
 - **Dashboards:** NEVER query raw tables for analytics (COUNT/SUM) in the Page Shell.
