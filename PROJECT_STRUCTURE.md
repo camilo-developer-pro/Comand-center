@@ -1,6 +1,6 @@
 # Project Structure: Command Center V3.0
 
-> **Status:** Phase 1: Substrate Hardening Complete ✅
+> **Status:** Milestone 2.1: Hybrid GraphRAG Complete ✅
 > **Context:** V3.0 Architecture (Unified Memory, Active Inference, Neural Graph)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
@@ -24,6 +24,14 @@ comand-center/
 │           ├── 011_dual_write_infrastructure.sql
 │           ├── 012_logs_migration.sql
 │           ├── 013_entity_backfill_resolution.sql
+│           ├── 014_hybrid_graphrag_indexes.sql
+│           ├── 015_vector_search_component.sql
+│           ├── 016_graph_expansion_component.sql
+│           ├── 017_search_hybrid_v3.sql
+│           ├── verify_014_hybrid_graphrag.sql
+│           ├── verify_015_vector_search.sql
+│           ├── verify_016_graph_expansion.sql
+│           ├── verify_017_search_hybrid_v3.sql
 │           ├── verify_phase1_complete.sql
 │           ├── DEPLOYMENT_RUNBOOK.md
 │           └── rollback_phase1.sql
@@ -62,6 +70,9 @@ comand-center/
 │   │   ├── hooks/
 │   │   ├── providers/
 │   │   ├── supabase/
+│   │   │   ├── hybrid-search.ts
+│   │   ├── types/
+│   │   │   ├── hybrid-search.ts
 │   │   ├── utils/
 │   │   ├── fractional-indexing.ts
 │   │   └── toast.ts
@@ -132,7 +143,7 @@ comand-center/
 
 1. **Authentication Flow**: Supabase Auth → Middleware → Server Components
 2. **Document CRUD**: Server Actions → Supabase RPC → RLS validation
-3. **Hybrid Search**: Vector embeddings + Full-text search + Graph traversal + RRF fusion
+3. **Hybrid Search**: Vector embeddings + Graph traversal + RRF fusion (`search_hybrid_v3`)
 4. **Neural Graph**: Entity extraction → Edge creation → Force-directed visualization
 
 ---
@@ -154,6 +165,7 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
 - [x] Phase 5: Neural Graph
 - [x] Phase 6: Hybrid Search
 - [x] V3.0 Phase 1: Substrate Hardening ✅
+- [x] V3.0 Milestone 2.1: Hybrid GraphRAG Complete ✅
 - [ ] V3.0 Phase 2: Active Inference Engine (Next)
 
 ### Key Entry Points
@@ -197,11 +209,11 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
    - **⚠️ Impact**: Auth bugs here affect all users; workspace resolution affects dashboard loading
 
 ### Recent Context (Last 5 Sessions)
-1. V3.0 Phase 1: Substrate Hardening Complete ✅
-2. Unified Memory Architecture deployed (Episodic, Semantic, Procedural)
-3. Entity Resolution Framework with Golden Records
-4. Active Inference infrastructure preparation
-5. V3.0 Phase 1 verification suite passing 100%
+1. V3.0 Milestone 2.1: Hybrid GraphRAG Complete ✅
+2. System 1 (Vector Search) + System 2 (Graph Expansion) implemented
+3. Reciprocal Rank Fusion (RRF) combining semantic and structural retrieval
+4. `search_hybrid_v3` RPC with workspace isolation and performance monitoring
+5. TypeScript client integration with embedding support
 
 ---
 

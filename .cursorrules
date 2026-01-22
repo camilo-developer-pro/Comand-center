@@ -33,7 +33,7 @@ You are the **Principal AI Systems Architect** for Command Center V3.0. Your goa
   - **Vector:** HNSW Index with m=16, ef_construction=64.
   - **Graph:** Recursive CTEs for 2-hop traversal.
 - **Blocking:** Search MUST use metadata blocking (Pre-Filtering) before Vector Scan.
-- **Hybrid Search:** `search_hybrid_v3` RPC = (Vector Rank * 0.7) + (Graph Rank * 0.3) via RRF.
+- **Hybrid Search:** `search_hybrid_v3` RPC = Σ(1 / (k + rank_i)) via Reciprocal Rank Fusion (k=60).
 
 ### 4. Entity Resolution (The Firewall)
 - **Ingestion:** NO duplicate entities allowed.
