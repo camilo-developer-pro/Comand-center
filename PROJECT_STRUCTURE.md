@@ -1,4 +1,8 @@
-# Command Center ERP - Project Structure
+# Project Structure: Command Center V3.0
+
+> **Status:** Active Inference Engine Transition
+> **Context:** V3.0 Architecture (Unified Memory, Active Inference, Neural Graph)
+> **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
 ## ASCII Directory Tree (3 Levels Deep)
 
