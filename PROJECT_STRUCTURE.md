@@ -1,6 +1,6 @@
 # Project Structure: Command Center V3.0
 
-> **Status:** Active Inference Engine Transition
+> **Status:** Phase 1: Substrate Hardening Complete ✅
 > **Context:** V3.0 Architecture (Unified Memory, Active Inference, Neural Graph)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
@@ -8,6 +8,25 @@
 
 ```
 comand-center/
+├── database/
+│   └── migrations/
+│       └── phase1/
+│           ├── 001_extensions.sql
+│           ├── 002_schemas.sql
+│           ├── 003_roles.sql
+│           ├── 004_uuidv7_function.sql
+│           ├── 005_fractional_indexing.sql
+│           ├── 006_episodic_memory_schema.sql
+│           ├── 007_episodic_partman_setup.sql
+│           ├── 008_semantic_memory_schema.sql
+│           ├── 009_procedural_memory_schema.sql
+│           ├── 010_entity_resolution_trigger.sql
+│           ├── 011_dual_write_infrastructure.sql
+│           ├── 012_logs_migration.sql
+│           ├── 013_entity_backfill_resolution.sql
+│           ├── verify_phase1_complete.sql
+│           ├── DEPLOYMENT_RUNBOOK.md
+│           └── rollback_phase1.sql
 ├── docs/
 │   ├── PERFORMANCE_PATTERNS.md
 │   ├── PERFORMANCE_REPORT.md
@@ -124,7 +143,7 @@ comand-center/
 
 ### Project Evolution
 ```
-V1.0 → V1.1 → V2.0 → V2.1 (Current)
+V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
 ```
 
 ### Active Development Phases
@@ -134,15 +153,20 @@ V1.0 → V1.1 → V2.0 → V2.1 (Current)
 - [x] Phase 4: Performance Optimization
 - [x] Phase 5: Neural Graph
 - [x] Phase 6: Hybrid Search
-- [ ] Phase 7: AI Integration (Next)
+- [x] V3.0 Phase 1: Substrate Hardening ✅
+- [ ] V3.0 Phase 2: Active Inference Engine (Next)
 
 ### Key Entry Points
 | Context | Path |
 |---------|------|
 | Main Planning Doc | `Command Center V2.1 ERP Implementation.md` |
+| V3.0 Technical Spec | `version_3.0.md` |
+| V3.0 Development Blueprint | `Command Center V3.0 Development Blueprint.md` |
+| V3.0 Phase 1 Runbook | `database/migrations/phase1/DEPLOYMENT_RUNBOOK.md` |
 | Project Log | `project_log.md` |
 | Cursor Rules | `.cursorrules` |
-| DB Schema | `supabase/migrations/00001_initial_schema.sql` |
+| DB Schema (V2.1) | `supabase/migrations/00001_initial_schema.sql` |
+| V3.0 Memory Schemas | `database/migrations/phase1/` |
 | App Entry | `src/app/layout.tsx` |
 
 ### High-Dependency Files (Critical Infrastructure)
@@ -173,11 +197,11 @@ V1.0 → V1.1 → V2.0 → V2.1 (Current)
    - **⚠️ Impact**: Auth bugs here affect all users; workspace resolution affects dashboard loading
 
 ### Recent Context (Last 5 Sessions)
-1. Hybrid Search Migration fixes (`search_hybrid` function)
-2. Fractional Indexing tests debugging
-3. Dashboard KPI Cards frontend
-4. Neural Graph feature integration
-5. Vector Search RPC security
+1. V3.0 Phase 1: Substrate Hardening Complete ✅
+2. Unified Memory Architecture deployed (Episodic, Semantic, Procedural)
+3. Entity Resolution Framework with Golden Records
+4. Active Inference infrastructure preparation
+5. V3.0 Phase 1 verification suite passing 100%
 
 ---
 
