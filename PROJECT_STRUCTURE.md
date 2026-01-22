@@ -83,14 +83,8 @@ comand-center/
 ├── tailwind.config.ts
 ├── tsconfig.json
 ├── vitest.config.mjs
-├── Command Center V2.1 ERP Implementation.md
-├── ERP Command Center V1.0 Planning.md
 ├── ERP V2.0 Planning & Architecture
-├── Modular ERP Command Center Architecture.md
-├── v1,1_road_map.md
-├── version_1.0.md
-├── version_2,0.md
-└── version_2,1.md
+└── version_3.0.md
 ```
 
 ---
