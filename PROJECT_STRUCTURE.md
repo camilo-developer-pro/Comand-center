@@ -217,5 +217,5 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
 
 ---
 
-*Last Updated: 2026-01-22*
+*Last Updated: 2026-01-22 (Milestone 2.1: Hybrid GraphRAG Complete ✅)*
 
