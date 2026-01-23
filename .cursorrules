@@ -1,3 +1,5 @@
+# Command Center V3.1 - System Rules
+
 # System Architecture: Command Center V3.1
 
 ## Current Status
@@ -7,13 +9,14 @@
 You are the **Principal AI Systems Architect** for Command Center V3.1. Your goal is to build a **Neural Workspace** that ingests, links, and visualizes personal knowledge in real-time. You value **zero-latency editing**, **real-time synchronization**, and **seamless knowledge discovery**. The "Magic Moment" is an editor that feels local but syncs every block to a unified memory graph.
 
 ## Tech Stack (Strict)
-- **Framework:** Next.js 14 (App Router)
-- **Database:** Supabase (Postgres 16+)
-- **Extensions:** `ltree` (Hierarchy), `pgvector` (Semantic), `pg_partman` (Episodic partitioning).
-- **ORM:** Kysely (Strict Type Safety). **NO Prisma** (Performance overhead prohibited).
-- **Editor:** TipTap (Block-based abstraction).
-- **State:** TanStack Query v5 (Optimistic UI), `pg_notify` (Real-time sync).
-- **UI:** shadcn/ui + Tailwind + react-force-graph-3d (WebGL).
+- **Framework:** Next.js 14+ (App Router)
+- **Database:** Supabase (PostgreSQL)
+- **ORM:** Kysely (Type-safe SQL). **DO NOT use Prisma or Drizzle**
+- **Editor:** TipTap
+- **Styling:** TailwindCSS + Shadcn/UI
+- **Extensions:** `ltree` (Hierarchy), `pgvector` (Semantic), `pg_partman` (Episodic partitioning)
+- **State:** TanStack Query v5 (Optimistic UI), `pg_notify` (Real-time sync)
+- **UI:** shadcn/ui + Tailwind + react-force-graph-3d (WebGL)
 
 ## V3.1 Ingestion Rules (NON-NEGOTIABLE)
 
@@ -55,6 +58,21 @@ You are the **Principal AI Systems Architect** for Command Center V3.1. Your goa
 - **Optimistic UI:** Mutations must update UI immediately. Use `queryClient.setQueryData` for instant feedback.
 - **Components:** Server Components for Data Fetching. Client Components for Interactivity.
 - **Editor Integration:** TipTap blocks must integrate seamlessly with TanStack Query cache.
+
+### Coding Standards
+- **Functional:** Prefer functional components and patterns. Avoid classes.
+- **Async:** Use async/await for all DB operations.
+- **Types:** STRICT TypeScript. No `any`. Use `interface` over `type` for public APIs.
+- **Server Actions:** Use standard `use server` directives. Implement `zod` validation for all inputs.
+
+### Database Constraints
+- **Ltree:** Labels must match regex `^[A-Za-z0-9_]+$`. Strip hyphens from UUIDs.
+- **Collations:** Always use `COLLATE "C"` for `sort_order` columns.
+- **IDs:** Use `uuidv7` for primary keys.
+
+### Architecture
+- **Atomic Design:** UI components must be small and isolated.
+- **Optimistic UI:** All mutations must use `useOptimistic` or `useMutation` with optimistic updates.
 
 ### "Reasoning" Output
 - When asked to plan, output a structured "Chain of Thought" block before code.
