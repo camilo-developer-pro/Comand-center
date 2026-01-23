@@ -178,7 +178,7 @@ export function useRealtimeSync(options: UseRealtimeSyncOptions) {
     // Set up subscription
     useEffect(() => {
         const channel = supabase.channel('realtime-bridge')
-            .on('broadcast', {}, (payload: any) => {
+            .on('system', {}, (payload: any) => {
                 switch (payload.event) {
                     case 'dashboard_delta':
                         handleDashboardDelta(payload as RealtimePayload<DashboardDeltaPayload>);

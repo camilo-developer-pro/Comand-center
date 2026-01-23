@@ -27,7 +27,8 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "types": ["three"]
   },
   "include": [
     "next-env.d.ts",
@@ -38,6 +39,7 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "supabase/functions"
   ]
 }
