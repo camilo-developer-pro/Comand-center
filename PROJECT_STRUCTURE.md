@@ -1,6 +1,6 @@
 # Project Structure: Command Center V3.0
 
-> **Status:** Milestone 2.1: Hybrid GraphRAG Complete ✅
+> **Status:** V3.0 Phase 3.2: Asynchronous State Sync Complete ✅
 > **Context:** V3.0 Architecture (Unified Memory, Active Inference, Neural Graph)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
@@ -12,42 +12,52 @@ comand-center/
 │   └── agent-runtime/
 ├── database/
 │   └── migrations/
-│       └── phase1/
-│           ├── 001_extensions.sql
-│           ├── 002_schemas.sql
-│           ├── 003_roles.sql
-│           ├── 004_uuidv7_function.sql
-│           ├── 005_fractional_indexing.sql
-│           ├── 006_episodic_memory_schema.sql
-│           ├── 007_episodic_partman_setup.sql
-│           ├── 008_semantic_memory_schema.sql
-│           ├── 009_procedural_memory_schema.sql
-│           ├── 010_entity_resolution_trigger.sql
-│           ├── 011_dual_write_infrastructure.sql
-│           ├── 012_logs_migration.sql
-│           ├── 013_entity_backfill_resolution.sql
-│           ├── 014_hybrid_graphrag_indexes.sql
-│           ├── 015_vector_search_component.sql
-│           ├── 016_graph_expansion_component.sql
-│           ├── 017_search_hybrid_v3.sql
-│           ├── verify_014_hybrid_graphrag.sql
-│           ├── verify_015_vector_search.sql
-│           ├── verify_016_graph_expansion.sql
-│           ├── verify_017_search_hybrid_v3.sql
-│           ├── verify_phase1_complete.sql
-│           ├── DEPLOYMENT_RUNBOOK.md
-│           └── rollback_phase1.sql
+│       ├── phase1/
+│       │   ├── 001_extensions.sql
+│       │   ├── 002_schemas.sql
+│       │   ├── 003_roles.sql
+│       │   ├── 004_uuidv7_function.sql
+│       │   ├── 005_fractional_indexing.sql
+│       │   ├── 006_episodic_memory_schema.sql
+│       │   ├── 007_episodic_partman_setup.sql
+│       │   ├── 008_semantic_memory_schema.sql
+│       │   ├── 009_procedural_memory_schema.sql
+│       │   ├── 010_entity_resolution_trigger.sql
+│       │   ├── 011_dual_write_infrastructure.sql
+│       │   ├── 012_logs_migration.sql
+│       │   ├── 013_entity_backfill_resolution.sql
+│       │   ├── 014_hybrid_graphrag_indexes.sql
+│       │   ├── 015_vector_search_component.sql
+│       │   ├── 016_graph_expansion_component.sql
+│       │   ├── 017_search_hybrid_v3.sql
+│       │   ├── verify_014_hybrid_graphrag.sql
+│       │   ├── verify_015_vector_search.sql
+│       │   ├── verify_016_graph_expansion.sql
+│       │   ├── verify_017_search_hybrid_v3.sql
+│       │   ├── verify_phase1_complete.sql
+│       │   ├── DEPLOYMENT_RUNBOOK.md
+│       │   └── rollback_phase1.sql
+│       └── phase3/
+│           ├── 001_error_taxonomy_schema.sql
+│           ├── 002_diagnostic_engine.sql
+│           ├── 003_seed_meta_agent_protocol.sql
+│           ├── 004_protocol_patch_commit.sql
+│           ├── 005_incremental_view_infrastructure.sql
+│           ├── 006_realtime_notification_channels.sql
+│           └── verify_phase3_complete.sql
 ├── docs/
 │   ├── PERFORMANCE_PATTERNS.md
 │   ├── PERFORMANCE_REPORT.md
 │   └── phase6-progress.md
 ├── public/
 ├── scripts/
+│   ├── check-phase3-status.js
 │   ├── phase6-performance-test.ts
 │   ├── verify-auth-setup.sh
 │   ├── verify-pg-cron-setup.sh
 │   ├── verify-phase1-v1.1.sh
 │   ├── verify-phase2-v1.1.ps1
+│   ├── verify-phase3-milestone-3.2.sh
 │   ├── verify-phase3-v1.1.js
 │   ├── verify-phase3-v1.1.sh
 │   ├── verify-phase4.sh
@@ -57,6 +67,9 @@ comand-center/
 │   │   ├── (auth)/
 │   │   ├── (dashboard)/
 │   │   ├── api/
+│   │   │   └── realtime/
+│   │   │       └── bridge/
+│   │   │           └── route.ts
 │   │   ├── auth/
 │   │   ├── globals.css
 │   │   ├── layout.tsx
@@ -71,8 +84,11 @@ comand-center/
 │   │   ├── __tests__/
 │   │   ├── agent-runtime/
 │   │   ├── hooks/
+│   │   │   └── useRealtimeSync.ts
 │   │   ├── protocols/
 │   │   ├── providers/
+│   │   ├── realtime/
+│   │   │   └── realtime-bridge.ts
 │   │   ├── supabase/
 │   │   │   ├── hybrid-search.ts
 │   │   ├── types/
@@ -99,7 +115,8 @@ comand-center/
 │   ├── REFERENCE.md
 │   └── SETUP.md
 ├── tests/
-│   └── items/
+│   ├── items/
+│   └── realtime-latency.spec.ts
 ├── .cursorrules
 ├── .env.local
 ├── .env.local.example
@@ -142,6 +159,7 @@ comand-center/
 | RLS Policies | `supabase/migrations/` | Row-Level Security enforced at database layer |
 | Hierarchical Items | `00010_hierarchical_items_ltree.sql` | ltree-based document/folder hierarchy |
 | Fractional Indexing | `src/lib/fractional-indexing.ts` | Lexicographic ordering for drag-drop reordering |
+| Real-time Sync | `src/lib/hooks/useRealtimeSync.ts` | PostgreSQL LISTEN/NOTIFY → Supabase Broadcast → TanStack Query |
 
 ### Key Logic Flows
 
@@ -149,6 +167,7 @@ comand-center/
 2. **Document CRUD**: Server Actions → Supabase RPC → RLS validation
 3. **Hybrid Search**: Vector embeddings + Graph traversal + RRF fusion (`search_hybrid_v3`)
 4. **Neural Graph**: Entity extraction → Edge creation → Force-directed visualization
+5. **Real-time Sync**: DB Triggers → pg_notify → Bridge → Supabase Broadcast → React Hooks
 
 ---
 
@@ -170,6 +189,8 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
 - [x] Phase 6: Hybrid Search
 - [x] V3.0 Phase 1: Substrate Hardening ✅
 - [x] V3.0 Milestone 2.1: Hybrid GraphRAG Complete ✅
+- [x] V3.0 Phase 3.1: Autonomous Self-Repair Complete ✅
+- [x] V3.0 Phase 3.2: Asynchronous State Sync Complete ✅
 - [ ] V3.0 Phase 2: Active Inference Engine (Next)
 
 ### Key Entry Points
@@ -221,5 +242,5 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
 
 ---
 
-*Last Updated: 2026-01-22 (Milestone 2.1: Hybrid GraphRAG Complete ✅)*
+*Last Updated: 2026-01-23 (V3.0 Phase 3.2: Asynchronous State Sync Complete ✅)*
 
