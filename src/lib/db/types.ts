@@ -104,3 +104,7 @@ export interface DB {
   blocks: BlocksTable;
   knowledge_graph_edges: KnowledgeGraphEdgesTable;
 }
+
+// Helper for row types
+import type { Selectable } from 'kysely';
+export type Tables<T extends keyof DB> = Selectable<DB[T]>;

@@ -36,3 +36,32 @@ export interface DocumentActionResponse {
     error?: string;
     data?: Document;
 }
+
+/**
+ * Represents an atomic block entity
+ */
+export interface BlockEntity {
+    id: string;
+    document_id: string;
+    content: any;
+    type: string;
+    sort_order: string;
+    parent_path: string;
+}
+
+/**
+ * Payload for syncing multiple blocks
+ */
+export interface SyncBlocksPayload {
+    documentId: string;
+    blocks: BlockEntity[];
+}
+
+/**
+ * Response from block operations
+ */
+export interface BlockActionResponse {
+    success: boolean;
+    error?: string;
+    data?: BlockEntity[];
+}

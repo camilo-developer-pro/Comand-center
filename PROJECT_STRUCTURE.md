@@ -1,6 +1,6 @@
 # Project Structure: Command Center V3.1
 
-> **Status:** V3.1: Atomic Ingestion Layer - Phase 2 Complete ✅
+> **Status:** V3.1: Server Actions & Access Automation Complete ✅
 > **Context:** V3.1 Architecture (Atomic Blocks, TipTap SSR, Kysely, Supabase SSR)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
@@ -95,7 +95,19 @@ comand-center/
 │   ├── lib/
 │   │   ├── __tests__/
 │   │   ├── agent-runtime/
+│   │   ├── actions/
+│   │   │   ├── types.ts
+│   │   │   ├── workspace-actions.ts
+│   │   │   ├── document-actions.ts
+│   │   │   └── index.ts
 │   │   ├── db/
+│   │   │   ├── migrations/
+│   │   │   │   ├── 001_extensions.sql
+│   │   │   │   ├── 002_core_schema.sql
+│   │   │   │   ├── 003_rls_policies.sql
+│   │   │   │   ├── 004_auto_membership_trigger.sql
+│   │   │   │   ├── verify_rls.sql
+│   │   │   │   └── 004_verify_auto_membership.sql
 │   │   │   ├── queries/
 │   │   │   │   ├── blocks.ts
 │   │   │   │   └── workspaces.ts
@@ -239,7 +251,9 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 2 ✅ (Current)
 - [x] V3.0 Phase 4: Infinite Interface Complete ✅
 - [x] V3.1 Phase 1: Foundation & SSR Client Setup ✅
 - [x] V3.1 Phase 2: Atomic Block Ingestion Layer ✅
-- [ ] V3.1 Phase 3: TipTap Editor Integration (Next)
+- [x] V3.1 Phase 3: Multi-Tenant RLS Policies ✅
+- [x] V3.1 Phase 4: Server Actions for Workspaces & Documents ✅
+- [ ] V3.1 Phase 5: TipTap Editor Core Implementation (Next)
 
 ### Key Entry Points
 | Context | Path |
@@ -284,12 +298,12 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 2 ✅ (Current)
    - **⚠️ Impact**: Identifier and path logic bugs cache-poison the database across all modules
 
 ### Recent Context (Last 5 Sessions)
-1. V3.1 Phase 2: Atomic Block Ingestion Layer Complete ✅
-2. Kysely type-safe SQL client with automated `kysely-codegen` sync
-3. Core schema for Workspaces, Documents, and Blocks with RAG/Vector support
-4. V3.1 Infrastructure: UUIDv7, Ltree path mappings, and Base62 Fractional Indexing
-5. Fixed utility export regressions to restore `cn` and other UI helpers
+1. V3.1 Phase 4: Server Actions for Workspace & Document CRUD ✅
+2. V3.1 Phase 3: Identity & Access Automation (RLS + Auto-membership Triggers) ✅
+3. V3.1 Phase 2: Atomic Block Ingestion Layer & Type-Safe SQL ✅
+4. Unified `ActionResult` pattern for robust application-layer error handling
+5. Zod-validated mutations with automatic Next.js Path Revalidation
 
 ---
 
-*Last Updated: 2026-01-23 (V3.1 Phase 2 Complete ✅)*
+*Last Updated: 2026-01-23 (V3.1 Phase 4 Complete ✅)*

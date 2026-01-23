@@ -1,6 +1,70 @@
 # Project Log: Command Center ERP
 
+
+## 2026-01-23: V3.1 Phase 4: Server Actions for Workspaces & Documents Complete ✅
+
+### Accomplishments
+- **Type-Safe Mutations:** Implemented unified Next.js Server Actions for full CRUD operations on workspaces and documents.
+- **Zod Validation:** Enforced strict schema validation for all action inputs, ensuring data integrity before database interaction.
+- **Consistent Responses:** Established a standard `ActionResult<T>` type to handle success and failure states uniformly across the application.
+- **Supabase Integration:** Leveraged the authenticated `createServerSupabaseClient` for secure, multi-tenant data access.
+- **Automatic Revalidation:** Integrated `revalidatePath` to ensure instant UI updates across the Next.js App Router for workspaces and document lists.
+- **Ltree Hierarchy Support:** Implemented path calculation and move logic for hierarchical documents using `ltree` utilities.
+
+### Files Created
+- `src/lib/actions/types.ts` - Core action response types
+- `src/lib/actions/workspace-actions.ts` - Workspace CRUD logic
+- `src/lib/actions/document-actions.ts` - Document CRUD logic
+- `src/lib/actions/index.ts` - Central action exports
+
 ---
+
+## 2026-01-23: V3.1 Phase 3: Identity & Access Automation Complete ✅
+
+### Accomplishments
+- **Auto-Membership Trigger:** Implemented `on_workspace_created` trigger to automatically add the creator of a workspace as an 'owner' member, preventing orphaned workspaces and ensuring immediate access.
+- **User Profile Sync:** Created a `profiles` table and `on_auth_user_created` trigger to automatically synchronize Supabase Auth metadata (full_name, avatar_url) into the public schema for collaboration.
+- **Security & RLS:** Deployed strict RLS policies for the `profiles` table, allowing authenticated users to view all profiles while restricting updates to the profile owner.
+- **Atomic Operations:** All triggers execute within the same transaction as the parent operation (workspace insertion or user signup), ensuring data consistency.
+
+### Files Created
+- `src/lib/db/migrations/004_auto_membership_trigger.sql` - Triggers and profiles schema
+- `src/lib/db/migrations/004_verify_auto_membership.sql` - Verification script
+
+---
+
+## 2026-01-23: V3.1 Phase 2: The Ingestion Engine (Atomic Block Editor) Complete ✅
+
+### Accomplishments
+- **TipTap Transition:** Migrated the monolithic document editor to a block-level atomic architecture using TipTap.
+- **Persistent Block IDs:** Developed `BlockIDExtension` to assign and persist UUIDv7 identifiers to every block (paragraph, heading, list item), enabling direct database mapping.
+- **Base62 Reordering:** Implemented `FractionalIndexExtension` for zero-latency reordering using lexicographical Base62 strings.
+- **Kysely Sync Engine:** Built a high-performance, debounced synchronization mechanism using Kysely server actions for atomic block upserts.
+- **Type-Safe API:** Established robust TypeScript interfaces for block entities, sync payloads, and action responses.
+
+### Files Created
+- `src/modules/editor/extensions/BlockIDExtension.ts` - Persistent IDs extension
+- `src/modules/editor/extensions/FractionalIndexExtension.ts` - Fractional indexing extension
+- `src/modules/editor/components/AtomicIngestionEditor.tsx` - V3.1 Core Editor
+- `src/modules/editor/actions/documentActions.ts` (Modified) - Added `syncBlocks` and `getDocumentBlocks`
+- `src/modules/editor/types.ts` (Modified) - Updated for block-level synchronization
+
+---
+
+## 2026-01-23: V3.1 Phase 2: Multi-Tenant RLS Policies Complete ✅
+
+### Accomplishments
+- **Multi-Tenant Isolation:** Implemented comprehensive RLS policies for `workspaces`, `workspace_members`, `documents`, `blocks`, and `knowledge_graph_edges`.
+- **Security Logic:** Developed `SECURITY DEFINER` helper functions for workspace membership and role validation, ensuring users can only access data they are authorized to see.
+- **Idempotent Migrations:** Added `DROP FUNCTION IF EXISTS` and `DROP POLICY IF EXISTS` statements to allow seamless redeployment even if components already exist.
+- **Performance Optimized:** Created dedicated indexes for user-workspace lookups to ensure policy checks don't become a bottleneck.
+- **Testing Utilities:** Built impersonation helpers for integration testing RLS policies under different user contexts.
+
+### Files Created
+- `src/lib/db/migrations/003_rls_policies.sql` - Main RLS policies migration
+- `src/lib/db/migrations/verify_rls.sql` - Security audit script
+- `src/lib/db/tests/rls-test-helpers.ts` - Testing utilities
+
 
 ## 2026-01-23: V3.1 Phase 2: Core System Utilities Complete ✅
 

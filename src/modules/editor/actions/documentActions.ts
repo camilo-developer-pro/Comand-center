@@ -2,13 +2,18 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import type { Block } from '@blocknote/core';
-import type {
-    SaveDocumentPayload,
-    UpdateTitlePayload,
-    DocumentActionResponse,
-    Document
+import { db } from '@/lib/db';
+import { v7 as uuidv7 } from 'uuid';
+import {
+    type SaveDocumentPayload,
+    type UpdateTitlePayload,
+    type DocumentActionResponse,
+    type Document,
+    type SyncBlocksPayload,
+    type BlockActionResponse,
+    type BlockEntity
 } from '../types';
+
 
 /**
  * Validates that the current user has access to the document.
@@ -244,3 +249,71 @@ export async function createDocument(
         return { success: false, error: 'An unexpected error occurred' };
     }
 }
+
+/**
+ * Syncs multiple blocks to the database (upsert).
+ */
+export async function syncBlocks(
+    payload: SyncBlocksPayload
+): Promise<BlockActionResponse> {
+    try {
+        const validation = await validateDocumentAccess(payload.documentId);
+        if (!validation.valid) {
+            return { success: false, error: validation.error };
+        }
+
+        // Using Kysely for upsert
+        await db
+            .insertInto('blocks')
+            .values(payload.blocks.map(block => ({
+                id: block.id,
+                document_id: payload.documentId,
+                content: JSON.stringify(block.content),
+                type: block.type,
+                sort_order: block.sort_order,
+                parent_path: block.parent_path || 'root',
+                updated_at: new Date()
+            })))
+            .onConflict((oc) => oc
+                .column('id')
+                .doUpdateSet((eb) => ({
+                    content: eb.ref('excluded.content'),
+                    sort_order: eb.ref('excluded.sort_order'),
+                    parent_path: eb.ref('excluded.parent_path'),
+                    type: eb.ref('excluded.type'),
+                    updated_at: new Date()
+                }))
+            )
+            .execute();
+
+        return { success: true };
+    } catch (err) {
+        console.error('[syncBlocks] Unexpected error:', err);
+        return { success: false, error: 'An unexpected error occurred' };
+    }
+}
+
+/**
+ * Fetches all blocks for a document, ordered by sort_order.
+ */
+export async function getDocumentBlocks(
+    documentId: string
+): Promise<BlockActionResponse> {
+    try {
+        const blocks = await db
+            .selectFrom('blocks')
+            .selectAll()
+            .where('document_id', '=', documentId)
+            .orderBy('sort_order', 'asc')
+            .execute();
+
+        return {
+            success: true,
+            data: blocks as unknown as BlockEntity[]
+        };
+    } catch (err) {
+        console.error('[getDocumentBlocks] Unexpected error:', err);
+        return { success: false, error: 'An unexpected error occurred' };
+    }
+}
+

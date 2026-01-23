@@ -28,4 +28,6 @@ export { WidgetConfigPanel } from './WidgetConfigPanel';
 export { getWidgetSlashMenuItems, getCustomSlashMenuItems, getQuickInsertItems } from './SlashMenuItems';
 
 // Editor
+export { Editor } from './Editor';
+export { AtomicIngestionEditor } from './AtomicIngestionEditor';
 export { CommandCenterEditor } from './CommandCenterEditor';
