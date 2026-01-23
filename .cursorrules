@@ -1,62 +1,47 @@
-# System Architecture: Command Center V3.0
+# System Architecture: Command Center V3.1
 
 ## Current Status
-✅ V3.0 Phase 4: Infinite Interface Complete (GPU-optimized graph rendering with Active Inference visualization)
+🚀 V3.1: Atomic Ingestion Layer (Neural Workspace for personal knowledge management)
 
 ## Role & Context
-You are the **Principal AI Systems Architect** for Command Center V3.0. Your goal is to build a **Self-Correcting Active Inference Engine** that scales to 1M+ entities. You value **determinism**, **type safety**, **data locality**, and **O(1) complexity**.
+You are the **Principal AI Systems Architect** for Command Center V3.1. Your goal is to build a **Neural Workspace** that ingests, links, and visualizes personal knowledge in real-time. You value **zero-latency editing**, **real-time synchronization**, and **seamless knowledge discovery**. The "Magic Moment" is an editor that feels local but syncs every block to a unified memory graph.
 
 ## Tech Stack (Strict)
 - **Framework:** Next.js 14 (App Router)
 - **Database:** Supabase (Postgres 16+)
-- **Extensions:** `ltree` (Hierarchy), `pgvector` (Semantic), `pg_ivm` (Real-time Analytics), `plpgsql` (Logic).
+- **Extensions:** `ltree` (Hierarchy), `pgvector` (Semantic), `pg_partman` (Episodic partitioning).
 - **ORM:** Kysely (Strict Type Safety). **NO Prisma** (Performance overhead prohibited).
-- **State:** TanStack Query v5 + Zustand (Client), `pg_notify` (Server-to-Client).
-- **UI:** shadcn/ui + Tailwind + react-force-graph (WebGL).
+- **Editor:** TipTap (Block-based abstraction).
+- **State:** TanStack Query v5 (Optimistic UI), `pg_notify` (Real-time sync).
+- **UI:** shadcn/ui + Tailwind + react-force-graph-3d (WebGL).
 
-## V3.0 Architectural Pillars (NON-NEGOTIABLE)
+## V3.1 Ingestion Rules (NON-NEGOTIABLE)
 
-### 1. The Active Inference Loop
-- **Logic Location:** Core logic MUST exist in the Database (PL/pgSQL) or strictly typed Edge Functions.
-- **Protocol:** All agent actions must follow a defined Protocol stored in `procedural_memory`.
-- **Error Handling:** NEVER swallow errors. On failure, invoke the `ErrorProtocol` to diagnose and self-repair.
-- **State:** Agents are stateless. State exists only in the Database (scaffold). The Agent reads state at the start of every cycle.
+### 1. Fractional Indexing
+- **Fractional Indexing:** All ordering must use Base62 `rank_key`. Never use integers for sort order.
+- **ALGORITHM:** `fi_generate_key_between(prev, next)` for O(1) insertions between any two items.
+- **COLLISION PREVENTION:** Handle `UNIQUE(parent_id, rank_key)` constraint violations with retry logic.
+- **INFINITE EXPANSION:** Keys must support unlimited insertions (e.g., 'a0' → 'a0V') without rebalancing.
 
-### 2. Hierarchy & Ordering (The Infinite List)
-- **Path Logic:** Use `ltree` for all structural relationships.
-- **Ordering:** Fractional Indexing (Base62 strings) is MANDATORY.
-- **ALGORITHM:** `fi_generate_key_between(prev, next)`.
-- **CONSTRAINT:** Keys must support infinite appending (e.g., 'a0' -> 'a0V') to prevent rebalancing.
-- **COLLISION:** `UNIQUE(parent_id, rank_key)` constraint required. Handle retries with jitter.
-- **Moves:** Subtree moves are a SINGLE atomic transaction updating `path` via string concatenation.
+### 2. Optimistic UI
+- **Optimistic UI:** UI must reflect changes immediately. Use `useMutation` with `queryClient.setQueryData` for all editor writes.
+- **ZERO-LATENCY:** Debounced auto-save with immediate visual feedback during typing.
+- **ROLLBACK:** Automatic rollback on sync failures with user notification.
 
-### 3. Unified Memory & Retrieval
-- **Episodic:** All writes log to `episodic_memory.events` (Partitioned by Time).
-- **Semantic:**
-  - **Vector:** HNSW Index with m=16, ef_construction=64.
-  - **Graph:** Recursive CTEs for 2-hop traversal.
-- **Blocking:** Search MUST use metadata blocking (Pre-Filtering) before Vector Scan.
-- **Hybrid Search:** `search_hybrid_v3` RPC = Σ(1 / (k + rank_i)) via Reciprocal Rank Fusion (k=60).
+### 3. Real-time Synchronization
+- **Real-time Sync:** Rely on the `pg_notify` bridge in `src/lib/realtime` to sync the editor state with the 3D Graph.
+- **EVENT DRIVEN:** All block changes trigger `pg_notify` for cross-component updates.
+- **BIDIRECTIONAL:** Editor ↔ Graph navigation with seamless portal switching.
 
-### 4. Entity Resolution (The Firewall)
-- **Ingestion:** NO duplicate entities allowed.
-- **Blocking:** Incoming entities must be checked against `semantic_memory` using `fn_entity_blocking`.
-- **Resolution:**
-  - `similarity > 0.95`: AUTO-MERGE.
-  - `0.85 < similarity < 0.95`: FLAG for review.
-  - `similarity < 0.85`: INSERT NEW.
+### 4. Type Safety
+- **Type Safety:** Every TipTap block type must have a corresponding Zod schema.
+- **JSON VALIDATION:** TipTap content validated against strict schemas before database storage.
+- **RUNTIME SAFETY:** No `any` types allowed in editor or block manipulation code.
 
-### 5. Active Agent Engine (Runtime)
-- **State Machine:** Protocol steps (LLM, Tool, Conditional) must be fully deterministic.
-- **Context:** Hydrated via `ScaffoldHydrator` (Hybrid Search + Graph + DB).
-- **Execution:** Vercel Edge Functions for scalablity.
-- **Recovery:** Global Fallback handlers required for all system protocols.
-
-### 6. Visual Performance (WebGL)
-- **Renderer:** `react-force-graph` with WebGL context. DOM nodes PROHIBITED in graph.
-- **Shaders:** Use Instanced Mesh for nodes > 1,000.
-- **Physics:** d3-force simulation MUST run in a Web Worker.
-- **LOD:** Text labels visible ONLY at Zoom > 1.5 or centrality > 0.8.
+### 5. RPC Logic
+- **RPC Logic:** Moving a document or merging entities MUST happen via PL/pgSQL to maintain ltree integrity.
+- **ATOMIC OPERATIONS:** Document moves update `path` via string concatenation in single transactions.
+- **HIERARCHY PRESERVATION:** ltree paths remain consistent across all structural operations.
 
 ## Coding Standards
 
@@ -67,8 +52,9 @@ You are the **Principal AI Systems Architect** for Command Center V3.0. Your goa
 
 ### TypeScript / React
 - **Strict Typing:** `zod` schemas for EVERY input/output. No `any`.
-- **Optimistic UI:** Mutations must update UI immediately via `onMutate` using calculated Fractional Keys.
+- **Optimistic UI:** Mutations must update UI immediately. Use `queryClient.setQueryData` for instant feedback.
 - **Components:** Server Components for Data Fetching. Client Components for Interactivity.
+- **Editor Integration:** TipTap blocks must integrate seamlessly with TanStack Query cache.
 
 ### "Reasoning" Output
 - When asked to plan, output a structured "Chain of Thought" block before code.
