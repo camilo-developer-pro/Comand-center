@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2022",
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext"
+      "ES2022"
     ],
-    "allowJs": true,
+    "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
-    "noImplicitAny": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -26,9 +25,18 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@/db/*": [
+        "./src/lib/db/*"
+      ],
+      "@/types/*": [
+        "./src/types/*"
       ]
     },
-    "types": ["three"]
+    "types": [
+      "three"
+    ],
+    "baseUrl": "."
   },
   "include": [
     "next-env.d.ts",

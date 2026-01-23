@@ -1,65 +1,50 @@
-/**
- * Supabase Middleware Utilities
- * 
- * V1.1 Phase 1: Authentication & User Flow
- * 
- * Utilities for creating Supabase clients in middleware context.
- */
-
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export function createMiddlewareClient(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
         },
-    });
-
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return request.cookies.get(name)?.value;
-                },
-                set(name: string, value: string, options: CookieOptions) {
-                    request.cookies.set({ name, value, ...options });
-                    response = NextResponse.next({
-                        request: { headers: request.headers },
-                    });
-                    response.cookies.set({ name, value, ...options });
-                },
-                remove(name: string, options: CookieOptions) {
-                    request.cookies.set({ name, value: '', ...options });
-                    response = NextResponse.next({
-                        request: { headers: request.headers },
-                    });
-                    response.cookies.set({ name, value: '', ...options });
-                },
-            },
-        }
-    );
-
-    return { supabase, response };
-}
-
-export function updateMiddlewareResponse(
-    response: NextResponse,
-    request: NextRequest
-) {
-    // Clone headers from original request
-    const newResponse = NextResponse.next({
-        request: {
-            headers: request.headers,
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
-    });
+      },
+    }
+  );
 
-    // Copy cookies from modified response
-    response.cookies.getAll().forEach((cookie) => {
-        newResponse.cookies.set(cookie);
-    });
+  // IMPORTANT: Avoid writing logic between createServerClient and
+  // supabase.auth.getUser(). This ensures the session is refreshed.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    return newResponse;
+  // Redirect unauthenticated users to login (adjust paths as needed)
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/auth')
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  return supabaseResponse;
 }

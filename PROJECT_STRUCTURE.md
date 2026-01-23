@@ -1,7 +1,7 @@
-# Project Structure: Command Center V3.0
+# Project Structure: Command Center V3.1
 
-> **Status:** V3.0 Phase 4: Infinite Interface Complete ✅
-> **Context:** V3.0 Architecture (Unified Memory, Active Inference, Neural Graph)
+> **Status:** V3.1: Atomic Ingestion Layer - Initialization Complete ✅
+> **Context:** V3.1 Architecture (Atomic Blocks, TipTap SSR, Kysely, Supabase SSR)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
 ## ASCII Directory Tree (3 Levels Deep)
@@ -34,6 +34,7 @@ comand-center/
 │       │   ├── verify_015_vector_search.sql
 │       │   ├── verify_016_graph_expansion.sql
 │       │   ├── verify_017_search_hybrid_v3.sql
+│       │   ├── verify_extensions.sql
 │       │   ├── verify_phase1_complete.sql
 │       │   ├── DEPLOYMENT_RUNBOOK.md
 │       │   └── rollback_phase1.sql
@@ -94,6 +95,11 @@ comand-center/
 │   ├── lib/
 │   │   ├── __tests__/
 │   │   ├── agent-runtime/
+│   │   ├── db/
+│   │   │   ├── index.ts
+│   │   │   ├── migrate.ts
+│   │   │   ├── run-migration.ts
+│   │   │   └── types.ts
 │   │   ├── hooks/
 │   │   │   └── useRealtimeSync.ts
 │   │   ├── protocols/
@@ -101,12 +107,15 @@ comand-center/
 │   │   ├── realtime/
 │   │   │   └── realtime-bridge.ts
 │   │   ├── supabase/
+│   │   │   ├── client.ts
 │   │   │   ├── hybrid-search.ts
+│   │   │   ├── middleware.ts
+│   │   │   └── server.ts
 │   │   ├── types/
 │   │   │   ├── hybrid-search.ts
 │   │   ├── utils/
-│   │   ├── fractional-indexing.ts
-│   │   └── toast.ts
+│   │   │   ├── fractional-indexing.ts
+│   │   │   └── toast.ts
 │   ├── modules/
 │   │   ├── ai/
 │   │   ├── core/
@@ -120,6 +129,8 @@ comand-center/
 │   │   └── reasoningLogStore.ts
 │   ├── test/
 │   ├── types/
+│   │   ├── env.d.ts
+│   │   └── database.types.ts
 │   ├── utils/
 │   ├── workers/
 │   └── middleware.ts
@@ -151,7 +162,7 @@ comand-center/
 ├── tsconfig.json
 ├── vitest.config.mjs
 ├── ERP V2.0 Planning & Architecture
-└── version_3.0.md
+└── version_3.1.md
 ```
 
 ---
@@ -176,6 +187,7 @@ comand-center/
 | Hierarchical Items | `00010_hierarchical_items_ltree.sql` | ltree-based document/folder hierarchy |
 | Fractional Indexing | `src/lib/fractional-indexing.ts` | Lexicographic ordering for drag-drop reordering |
 | Real-time Sync | `src/lib/hooks/useRealtimeSync.ts` | PostgreSQL LISTEN/NOTIFY → Supabase Broadcast → TanStack Query |
+| Supabase SSR | `src/lib/supabase/` | Official @supabase/ssr patterns for Next.js App Router |
 
 ### Key Logic Flows
 
@@ -186,6 +198,7 @@ comand-center/
 5. **Real-time Sync**: DB Triggers → pg_notify → Bridge → Supabase Broadcast → React Hooks
 6. **Active Inference**: Protocol execution → Scaffold hydration → LLM calls → State transitions
 7. **WebGL Rendering**: Graph data → Web Worker physics → Instanced meshes → Single draw calls
+8. **Atomic Ingestion**: TipTap Block parsing → Row-level PostgreSQL inserts → Async Embedding triggers
 
 ---
 
@@ -195,7 +208,7 @@ comand-center/
 
 ### Project Evolution
 ```
-V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
+V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 1 ✅ (Current)
 ```
 
 ### Active Development Phases
@@ -210,15 +223,16 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
 - [x] V3.0 Phase 3.1: Autonomous Self-Repair Complete ✅
 - [x] V3.0 Phase 3.2: Asynchronous State Sync Complete ✅
 - [x] V3.0 Phase 4: Infinite Interface Complete ✅
-- [ ] V3.0 Phase 2: Active Inference Engine (Next)
+- [x] V3.1 Phase 1: Foundation & SSR Client Setup ✅
+- [ ] V3.1 Phase 2: Atomic Block Ingestion Layer (Next)
 
 ### Key Entry Points
 | Context | Path |
 |---------|------|
 | Main Planning Doc | `Command Center V2.1 ERP Implementation.md` |
+| V3.1 Execution Blueprint | `Command Center V3.1 Execution Blueprint.md` |
 | V3.0 Technical Spec | `version_3.0.md` |
 | V3.0 Development Blueprint | `Command Center V3.0 Development Blueprint.md` |
-| V3.0 Phase 1 Runbook | `database/migrations/phase1/DEPLOYMENT_RUNBOOK.md` |
 | Project Log | `project_log.md` |
 | Cursor Rules | `.cursorrules` |
 | DB Schema (V2.1) | `supabase/migrations/00001_initial_schema.sql` |
@@ -233,6 +247,7 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
 |------|------|------------|
 | `middleware.ts` | Auth Middleware | All protected routes, session management |
 | `src/lib/supabase/server.ts` | Server DB Client | All Server Actions, Server Components |
+| `src/lib/db/index.ts` | Kysely DB Client | All type-safe SQL operations |
 | `src/modules/core/auth/actions/authActions.ts` | Auth Actions | Login, Signup, Session, Workspace resolution |
 
 #### See Also Notes
@@ -253,14 +268,12 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 Phase 1 ✅ (Current)
    - **⚠️ Impact**: Auth bugs here affect all users; workspace resolution affects dashboard loading
 
 ### Recent Context (Last 5 Sessions)
-1. V3.0 Phase 4: Infinite Interface Complete ✅
-2. Command Center dashboard with real-time graph visualization
-3. WebGL-optimized rendering with Web Worker physics simulation
-4. Active Inference reasoning log with live cycle metrics
-5. Comprehensive performance benchmarks and integration tests
-6. Phase 4 dependencies installed (react-force-graph-3d, @react-three/fiber)
+1. V3.1 Phase 1: Foundation & SSR Client Setup Complete ✅
+2. Next.js 14+ App Router with official @supabase/ssr integration
+3. Kysely type-safe SQL client with direct PostgreSQL pool
+4. Extension migration for ltree, pgvector, pg_net, and pg_cron
+5. Fixed pg_cron migration privilege conflicts for Supabase
 
 ---
 
-*Last Updated: 2026-01-23 (V3.0 Phase 4: Infinite Interface Complete ✅)*
-
+*Last Updated: 2026-01-23 (V3.1 Phase 1 Complete ✅)*
