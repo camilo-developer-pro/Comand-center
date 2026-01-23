@@ -1,6 +1,6 @@
 # Project Structure: Command Center V3.1
 
-> **Status:** V3.1: Atomic Ingestion Layer - Initialization Complete ✅
+> **Status:** V3.1: Atomic Ingestion Layer - Phase 2 Complete ✅
 > **Context:** V3.1 Architecture (Atomic Blocks, TipTap SSR, Kysely, Supabase SSR)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
@@ -96,6 +96,11 @@ comand-center/
 │   │   ├── __tests__/
 │   │   ├── agent-runtime/
 │   │   ├── db/
+│   │   │   ├── queries/
+│   │   │   │   ├── blocks.ts
+│   │   │   │   └── workspaces.ts
+│   │   │   ├── codegen.ts
+│   │   │   ├── generated-types.ts
 │   │   │   ├── index.ts
 │   │   │   ├── migrate.ts
 │   │   │   ├── run-migration.ts
@@ -114,8 +119,17 @@ comand-center/
 │   │   ├── types/
 │   │   │   ├── hybrid-search.ts
 │   │   ├── utils/
-│   │   │   ├── fractional-indexing.ts
-│   │   │   └── toast.ts
+│   │   │   ├── __tests__/
+│   │   │   │   └── ltree.test.ts
+│   │   │   ├── apiTracker.ts
+│   │   │   ├── cn.ts
+│   │   │   ├── formatRelativeTime.ts
+│   │   │   ├── fractional-index.ts
+│   │   │   ├── index.ts
+│   │   │   ├── ltree.ts
+│   │   │   ├── performanceLogger.ts
+│   │   │   ├── toast.ts
+│   │   │   └── uuid.ts
 │   ├── modules/
 │   │   ├── ai/
 │   │   ├── core/
@@ -208,7 +222,7 @@ comand-center/
 
 ### Project Evolution
 ```
-V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 1 ✅ (Current)
+V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 2 ✅ (Current)
 ```
 
 ### Active Development Phases
@@ -224,7 +238,8 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 1 ✅ (Current)
 - [x] V3.0 Phase 3.2: Asynchronous State Sync Complete ✅
 - [x] V3.0 Phase 4: Infinite Interface Complete ✅
 - [x] V3.1 Phase 1: Foundation & SSR Client Setup ✅
-- [ ] V3.1 Phase 2: Atomic Block Ingestion Layer (Next)
+- [x] V3.1 Phase 2: Atomic Block Ingestion Layer ✅
+- [ ] V3.1 Phase 3: TipTap Editor Integration (Next)
 
 ### Key Entry Points
 | Context | Path |
@@ -235,8 +250,8 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 1 ✅ (Current)
 | V3.0 Development Blueprint | `Command Center V3.0 Development Blueprint.md` |
 | Project Log | `project_log.md` |
 | Cursor Rules | `.cursorrules` |
-| DB Schema (V2.1) | `supabase/migrations/00001_initial_schema.sql` |
-| V3.0 Memory Schemas | `database/migrations/phase1/` |
+| DB Schema (V3.1 Core) | `src/lib/db/migrations/002_core_schema.sql` |
+| Kysely Types | `src/lib/db/generated-types.ts` |
 | App Entry | `src/app/layout.tsx` |
 
 ### High-Dependency Files (Critical Infrastructure)
@@ -248,6 +263,7 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 1 ✅ (Current)
 | `middleware.ts` | Auth Middleware | All protected routes, session management |
 | `src/lib/supabase/server.ts` | Server DB Client | All Server Actions, Server Components |
 | `src/lib/db/index.ts` | Kysely DB Client | All type-safe SQL operations |
+| `src/lib/utils/index.ts` | Core Utilities | Identifier generation, ltree paths, sorting |
 | `src/modules/core/auth/actions/authActions.ts` | Auth Actions | Login, Signup, Session, Workspace resolution |
 
 #### See Also Notes
@@ -262,18 +278,18 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 1 ✅ (Current)
    - **See Also**: `src/lib/supabase/client.ts` (browser client), `Database` types
    - **⚠️ Impact**: Every Server Action depends on this; changes affect data layer globally
 
-3. **`src/modules/core/auth/actions/authActions.ts`**
-   - **What it does**: All auth mutations (signIn, signUp, signOut, password reset) + `getCurrentUser` with workspace resolution
-   - **See Also**: `src/modules/core/auth/schemas/` (Zod validation), workspace "God-Mode" for Super Admins
-   - **⚠️ Impact**: Auth bugs here affect all users; workspace resolution affects dashboard loading
+3. **`src/lib/utils/index.ts`**
+   - **What it does**: Centralized access to critical infrastructure (UUIDv7, Ltree, Fractional Indexing)
+   - **See Also**: `src/lib/utils/uuid.ts`, `src/lib/utils/ltree.ts`
+   - **⚠️ Impact**: Identifier and path logic bugs cache-poison the database across all modules
 
 ### Recent Context (Last 5 Sessions)
-1. V3.1 Phase 1: Foundation & SSR Client Setup Complete ✅
-2. Next.js 14+ App Router with official @supabase/ssr integration
-3. Kysely type-safe SQL client with direct PostgreSQL pool
-4. Extension migration for ltree, pgvector, pg_net, and pg_cron
-5. Fixed pg_cron migration privilege conflicts for Supabase
+1. V3.1 Phase 2: Atomic Block Ingestion Layer Complete ✅
+2. Kysely type-safe SQL client with automated `kysely-codegen` sync
+3. Core schema for Workspaces, Documents, and Blocks with RAG/Vector support
+4. V3.1 Infrastructure: UUIDv7, Ltree path mappings, and Base62 Fractional Indexing
+5. Fixed utility export regressions to restore `cn` and other UI helpers
 
 ---
 
-*Last Updated: 2026-01-23 (V3.1 Phase 1 Complete ✅)*
+*Last Updated: 2026-01-23 (V3.1 Phase 2 Complete ✅)*

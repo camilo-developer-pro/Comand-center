@@ -46,10 +46,18 @@ You are the **Principal AI Systems Architect** for Command Center V3.1. Your goa
 - **ATOMIC OPERATIONS:** Document moves update `path` via string concatenation in single transactions.
 - **HIERARCHY PRESERVATION:** ltree paths remain consistent across all structural operations.
 
+### 6. Critical Utilities
+- **UUIDv7:** Always use `generateUUIDv7()` from `@/lib/utils` for primary keys. Never use `crypto.randomUUID()` or V4 for core entities.
+- **Ltree Paths:** Use `uuidToLtreeLabel()` to strip hyphens from UUIDs before creating ltree paths. Maintain the `root.uuid.uuid` format.
+- **Fractional Indexing:** Use `generateKeyBetween()` for all ordering logic. Ensure database columns use `COLLATE "C"`.
+- **Kysely Queries:** Use typed query modules in `src/lib/db/queries/`. Rely on `SelectableTable`, `InsertableTable`, and `UpdateableTable` types.
+
 ## Coding Standards
 
 ### Database Interactions
-- **RPC First:** Complex mutations (Moves, Merges, RAG) must be PL/pgSQL functions.
+- **Kysely First:** Prefer Kysely for high-performance SQL, `ltree` operations, and specialized indexes.
+- **Type Generation:** Run `npm run db:generate` after schema changes to update `generated-types.ts`.
+- **RPC Second:** Use PL/pgSQL RPCs for atomic cross-table operations or complex hierarchy logic (moves/merges).
 - **Migrations:** SQL migrations must be idempotent. NO "magic" ORM migrations.
 - **Locking:** Use `FOR UPDATE SKIP LOCKED` for task queue consumers to prevent contention.
 

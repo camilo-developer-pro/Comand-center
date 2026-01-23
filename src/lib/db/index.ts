@@ -1,13 +1,26 @@
-import { Kysely, PostgresDialect } from 'kysely';
+import { Kysely, PostgresDialect, Selectable, Insertable, Updateable } from 'kysely';
 import { Pool } from 'pg';
-import type { Database } from './types';
+import type { DB } from './generated-types';
 
-const dialect = new PostgresDialect({
-  pool: new Pool({
-    connectionString: process.env.DATABASE_URL,
+// Create a connection pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Create the Kysely instance with generated types
+export const db = new Kysely<DB>({
+  dialect: new PostgresDialect({
+    pool,
   }),
 });
 
-export const db = new Kysely<Database>({
-  dialect,
-});
+// Export types for use in application
+export type { DB } from './generated-types';
+
+// Utility types for table rows
+export type SelectableTable<T extends keyof DB> = Selectable<DB[T]>;
+export type InsertableTable<T extends keyof DB> = Insertable<DB[T]>;
+export type UpdateableTable<T extends keyof DB> = Updateable<DB[T]>;

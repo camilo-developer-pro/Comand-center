@@ -7,9 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:generate": "kysely-codegen --out-file src/lib/db/types.ts",
+    "db:generate": "tsx src/lib/db/codegen.ts",
     "db:migrate": "tsx src/lib/db/migrate.ts",
-    "db:extensions": "tsx src/lib/db/run-migration.ts",
     "db:types": "npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/database.types.ts",
     "db:types:local": "npx supabase gen types typescript --local > src/types/database.types.ts",
     "db:push": "npx supabase db push",
@@ -61,6 +60,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^3.4.0",
     "three": "^0.182.0",
+    "uuid": "^13.0.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {

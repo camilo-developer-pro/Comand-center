@@ -2,6 +2,62 @@
 
 ---
 
+## 2026-01-23: V3.1 Phase 2: Core System Utilities Complete ✅
+
+### Accomplishments
+- **UUIDv7 Implementation:** Developed a native `crypto`-powered UUIDv7 generator for time-ordered, coordinate-free identifier generation. Includes timestamp extraction and validation.
+- **Ltree Transformations:** Created robust mapping between standard UUIDs and PostgreSQL-compatible `ltree` labels (hyphen-stripping). Implemented hierarchy helpers (`getParentPath`, `isAncestorOf`, `buildLtreePath`).
+- **Base62 Fractional Indexing:** Implemented lexicographical reordering logic using Base62 characters. Optimized for JavaScript's standard string comparison to match PostgreSQL `COLLATE "C"`.
+- **Cross-Environment Compatibility:** Ensured all utilities work seamlessly in both Node.js (SSR) and Browser (Client) environments.
+- **Verification Suite:** Established unit tests for Ltree transformations using `vitest` to ensure data integrity during path roundtrips.
+
+### Files Created
+- `src/lib/utils/uuid.ts` - UUIDv7 logic
+- `src/lib/utils/ltree.ts` - Path transformation
+- `src/lib/utils/fractional-index.ts` - Reordering logic
+- `src/lib/utils/index.ts` - Central re-exports
+- `src/lib/utils/__tests__/ltree.test.ts` - Unit tests
+
+---
+
+## 2026-01-23: V3.1 Phase 2: Kysely Configuration & Type-Safe Queries Complete ✅
+
+### Accomplishments
+- **Kysely Integration:** Configured `Kysely` with `pg.Pool` for type-safe database access, providing lower-level SQL control for `ltree` and `pgvector` operations.
+- **Type Generation:** Implemented `db:generate` script using `kysely-codegen` to automatically synchronize TypeScript interfaces with the live PostgreSQL schema.
+- **Typed Query Modules:**
+    - `workspaces`: Implemented CRUD operations for workspaces with workspace_members association.
+    - `blocks`: Implemented advanced content block queries including semantic similarity search (pgvector) and fractional indexing ordering (COLLATE "C").
+- **Utility Type Infrastructure:** Exported `SelectableTable`, `InsertableTable`, and `UpdateableTable` helpers to simplify application-layer state management.
+- **Project Structure Alignment:** Established `src/lib/db/queries` directory for organized domain-specific SQL logic.
+
+### Files Created/Modified
+- `src/lib/db/index.ts` - Main Kysely instance and utility types
+- `src/lib/db/types.ts` - Custom DB type definitions
+- `src/lib/db/codegen.ts` - Type generation script
+- `src/lib/db/generated-types.ts` - Generated schema interfaces
+- `src/lib/db/queries/workspaces.ts` - Typed workspace queries
+- `src/lib/db/queries/blocks.ts` - Typed block queries (RAG + Reordering)
+
+---
+
+## 2026-01-23: V3.1 Phase 2: Atomic Block Ingestion Layer - Core Schema Complete ✅
+
+### Accomplishments
+- **Core Schema Migration:** Implemented the foundational schema for V3.1, including `workspaces`, `workspace_members`, `documents`, `blocks`, and `knowledge_graph_edges`.
+- **Atomic Blocks:** Defined the `blocks` table as the central unit of content, with `ltree` hierarchy and support for vector embeddings (1536 dims).
+- **Time-Ordered PKs:** Standardized primary keys to use `public.generate_uuidv7()` for efficient time-series indexing and coordination-free generation.
+- **Fractional Indexing:** Configured `sort_order` with `COLLATE "C"` to ensure deterministic Base62 lexicographical ordering across JavaScript and PostgreSQL.
+- **Search Optimization:** Implemented GIST indexes for `ltree` paths, B-Tree indexes for sort order, and IVFFLAT for vector similarity search.
+- **Knowledge Graph:** Created `knowledge_graph_edges` table with bi-temporal support and confidence scoring for GraphRAG operations.
+- **Automatic Auditing:** Deployed `updated_at` triggers across all core tables for automated change tracking.
+
+### Files Created
+- `src/lib/db/migrations/002_core_schema.sql` - Core schema migration
+- `src/lib/db/migrations/002_verify_core_schema.sql` - Verification script
+
+---
+
 ## 2026-01-23: V3.1 Phase 1: Foundation & SSR Client Setup Complete ✅
 
 ### Accomplishments
