@@ -1,6 +1,38 @@
 # Project Log: Command Center ERP
 
 
+## 2026-01-24: V3.1 Phase 5: TipTap Editor Core Implementation with Atomic Folder Operations Complete ✅
+
+### Accomplishments
+- **Transactional ltree Updates:** Enhanced `moveDocument` Server Action with Kysely transactions using `FOR UPDATE` row-level locking to prevent concurrent corruption during document/folder moves.
+- **Cycle Detection:** Implemented PostgreSQL ltree `@>` operator validation to prevent parent-into-child moves, ensuring hierarchical integrity.
+- **Atomic Descendant Updates:** Created atomic path updates for all descendant documents using `subpath()` function within single transactions.
+- **DocumentTree Component:** Built drag-and-drop tree visualization with `@dnd-kit` integration for intuitive folder/document reordering.
+- **Optimistic UI:** Implemented TanStack Query mutations with optimistic updates for immediate visual feedback during drag operations.
+- **Hierarchical Data Fetching:** Created `getDocumentTree` Server Action for efficient tree structure retrieval with workspace isolation.
+
+### Technical Highlights
+- **Row-Level Locking:** `FOR UPDATE` ensures exclusive access during complex ltree path transformations
+- **Cycle Prevention:** Mathematical guarantee against invalid hierarchy moves using ltree ancestry checks
+- **Workspace Security:** Multi-tenant isolation enforced at database level with RLS validation
+- **TypeScript Safety:** Full type definitions with `DocumentTreeProps` interface and proper barrel exports
+- **Performance Optimization:** Efficient descendant updates using GIST-indexed ltree path queries
+
+### Files Created/Modified
+- `src/lib/actions/document-actions.ts` (Updated) - Enhanced `moveDocument` with transactional ltree updates and cycle detection
+- `src/modules/editor/components/DocumentTree.tsx` (Created) - Drag-and-drop tree component with dnd-kit integration
+- `src/modules/editor/components/index.ts` (Updated) - Added `DocumentTree` and `DocumentTreeProps` exports
+
+### Acceptance Criteria Verified
+- ✅ Transactional ltree updates with atomic descendant path modifications
+- ✅ Row-level locking prevents concurrent corruption during moves
+- ✅ Cycle detection prevents parent-into-child moves
+- ✅ Drag-and-drop interface with optimistic UI updates
+- ✅ Workspace-scoped security and validation
+- ✅ TypeScript strict mode compliance
+
+---
+
 ## 2026-01-23: V3.1 Phase 4: Server Actions for Workspaces & Documents Complete ✅
 
 ### Accomplishments

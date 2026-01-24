@@ -20,3 +20,11 @@ export {
     moveDocument,
     deleteDocument,
 } from './document-actions';
+
+// Block actions
+export {
+    upsertBlock,
+    syncBlocks,
+    getDocumentBlocks,
+    deleteBlock,
+} from './block-actions';

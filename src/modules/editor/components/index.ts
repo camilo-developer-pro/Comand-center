@@ -1,7 +1,8 @@
 /**
  * Editor Components - Public API
- * 
+ *
  * V1.1 Phase 3: Widget Insertion UX
+ * V3.1 Phase 5: Optimistic UI Patterns
  */
 
 // Error handling
@@ -31,3 +32,20 @@ export { getWidgetSlashMenuItems, getCustomSlashMenuItems, getQuickInsertItems }
 export { Editor } from './Editor';
 export { AtomicIngestionEditor } from './AtomicIngestionEditor';
 export { CommandCenterEditor } from './CommandCenterEditor';
+export { DocumentEditor } from './DocumentEditor';
+
+// Drag-and-drop reordering
+export { SortableBlockWrapper } from './SortableBlockWrapper';
+export { DraggableBlockList } from './DraggableBlockList';
+export { DocumentTree } from './DocumentTree';
+export type { DocumentTreeProps } from './DocumentTree';
+
+// Status indicators
+export { SaveStatusIndicator } from './SaveStatusIndicator';
+export {
+    SyncStatus,
+    InlineSyncStatus,
+    ToolbarSyncStatus,
+    SyncStatusBadge,
+    type SyncStatusProps
+} from './SyncStatus';

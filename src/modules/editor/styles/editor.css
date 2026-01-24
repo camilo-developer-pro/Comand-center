@@ -1,0 +1,29 @@
+.ProseMirror {
+  min-height: 200px;
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror [data-block-id] {
+  position: relative;
+}
+
+/* Optional: Visual indicator for block boundaries */
+.ProseMirror [data-block-id]:hover::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #3b82f6;
+  border-radius: 2px;
+  opacity: 0.5;
+}

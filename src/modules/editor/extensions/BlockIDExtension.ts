@@ -1,78 +1,72 @@
 import { Extension } from '@tiptap/core';
-import { v7 as uuidv7 } from 'uuid';
-import { Plugin } from '@tiptap/pm/state';
-import { Node as ProsemirrorNode } from '@tiptap/pm/model';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { generateUUIDv7 } from '@/lib/utils';
 
-/**
- * BlockIDExtension
- * 
- * Automatically assigns a unique UUIDv7 to every block node (paragraph, heading, etc.)
- * when it is created. This ID is persistent and serves as the primary key
- * in the database `blocks` table.
- */
-export const BlockIDExtension = Extension.create({
-    name: 'blockId',
+export interface BlockIDOptions {
+  types: string[]; // Node types to track (paragraph, heading, bulletList, etc.)
+}
 
-    addGlobalAttributes() {
-        return [
-            {
-                types: ['paragraph', 'heading', 'blockquote', 'codeBlock', 'bulletList', 'orderedList', 'listItem'],
-                attributes: {
-                    id: {
-                        default: null,
-                        parseHTML: element => element.getAttribute('data-id'),
-                        renderHTML: attributes => {
-                            if (!attributes.id) {
-                                return {};
-                            }
-
-                            return {
-                                'data-id': attributes.id,
-                            };
-                        },
-                    },
-                },
+export const BlockIDExtension = Extension.create<BlockIDOptions>({
+  name: 'blockId',
+  
+  addOptions() {
+    return {
+      types: ['paragraph', 'heading', 'bulletList', 'orderedList', 'listItem', 'codeBlock', 'blockquote'],
+    };
+  },
+  
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          blockId: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-block-id'),
+            renderHTML: (attributes) => {
+              if (!attributes.blockId) return {};
+              return { 'data-block-id': attributes.blockId };
             },
-        ];
-    },
+          },
+        },
+      },
+    ];
+  },
+  
+  onCreate() {
+    this.editor.state.doc.descendants((node, pos) => {
+      if (this.options.types.includes(node.type.name) && !node.attrs.blockId) {
+        this.editor.commands.updateAttributes(node.type.name, { blockId: generateUUIDv7() });
+      }
+    });
+  },
 
-    onCreate() {
-        this.editor.state.doc.descendants((node, pos) => {
-            if (node.isBlock && !node.attrs.id) {
-                this.editor.commands.updateAttributes(node.type.name, { id: uuidv7() });
+  addProseMirrorPlugins() {
+    const { types } = this.options;
+    
+    return [
+      new Plugin({
+        key: new PluginKey('blockIdGenerator'),
+        appendTransaction: (transactions, oldState, newState) => {
+          // Only process if document changed
+          if (!transactions.some(tr => tr.docChanged)) return null;
+          
+          const tr = newState.tr;
+          let modified = false;
+          
+          newState.doc.descendants((node, pos) => {
+            if (types.includes(node.type.name) && !node.attrs.blockId) {
+              tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                blockId: generateUUIDv7(),
+              });
+              modified = true;
             }
-        });
-    },
-
-    addProseMirrorPlugins() {
-        return [
-            new Plugin({
-                appendTransaction: (transactions, oldState, newState) => {
-                    const docChanges = transactions.some(tr => tr.docChanged);
-                    if (!docChanges) {
-                        return null;
-                    }
-
-                    const tr = newState.tr;
-                    let modified = false;
-
-                    newState.doc.descendants((node: ProsemirrorNode, pos: number) => {
-                        if (node.isBlock && node.type.name !== 'doc') {
-                            const id = node.attrs.id;
-
-                            if (!id) {
-                                tr.setNodeMarkup(pos, undefined, {
-                                    ...node.attrs,
-                                    id: uuidv7(),
-                                });
-                                modified = true;
-                            }
-                        }
-                    });
-
-                    return modified ? tr : null;
-                },
-            }),
-        ];
-    },
+          });
+          
+          return modified ? tr : null;
+        },
+      }),
+    ];
+  },
 });

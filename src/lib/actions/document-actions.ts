@@ -2,10 +2,12 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { sql } from 'kysely';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { success, failure, type ActionResult } from './types';
 import { generateUUIDv7 } from '@/lib/utils/uuid';
-import { appendToPath } from '@/lib/utils/ltree';
+import { appendToPath, uuidToLtreeLabel } from '@/lib/utils/ltree';
+import { db } from '@/lib/db';
 import type { Tables } from '@/lib/db/types';
 
 // ============================================================================
@@ -27,8 +29,9 @@ const updateDocumentSchema = z.object({
 });
 
 const moveDocumentSchema = z.object({
-    id: z.string().uuid(),
-    newParentId: z.string().uuid().nullable(),
+  documentId: z.string().uuid(),
+  newParentId: z.string().uuid().nullable(),
+  workspaceId: z.string().uuid(),
 });
 
 // ============================================================================
@@ -226,61 +229,172 @@ export async function updateDocument(
 }
 
 /**
- * Move document to a new parent (with transaction for ltree update)
+ * Move document to a new parent with transactional ltree updates
+ * Includes row-level locking, cycle detection, and descendant path updates
  */
 export async function moveDocument(
     input: MoveDocumentInput
-): Promise<ActionResult<Document>> {
+): Promise<ActionResult<{ id: string; newPath: string }>> {
     try {
-        const validated = moveDocumentSchema.safeParse(input);
-        if (!validated.success) {
-            return failure(validated.error.issues[0].message, 'VALIDATION_ERROR');
+        const validation = moveDocumentSchema.safeParse(input);
+        if (!validation.success) {
+            return failure(validation.error.message, 'VALIDATION_ERROR');
         }
-
+        
         const supabase = await createServerSupabaseClient();
-
-        // Get the new parent's path (or 'root' if moving to top level)
-        let newPath = 'root';
-        if (validated.data.newParentId) {
-            const { data: parent } = await supabase
-                .from('documents')
-                .select('path')
-                .eq('id', validated.data.newParentId)
-                .single();
-
-            if (!parent) {
-                return failure('Parent document not found', 'NOT_FOUND');
-            }
-
-            newPath = appendToPath(parent.path, validated.data.newParentId);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            return failure('Unauthorized', 'UNAUTHORIZED');
         }
-
-        // Update the document
-        const { data, error } = await supabase
-            .from('documents')
-            .update({
-                parent_id: validated.data.newParentId,
-                path: newPath,
-            })
-            .eq('id', validated.data.id)
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Failed to move document:', error);
-            return failure('Failed to move document', 'DATABASE_ERROR');
+        
+        const { documentId, newParentId, workspaceId } = validation.data;
+        
+        try {
+            // Use transaction with row-level locking
+            const result = await db.transaction().execute(async (trx) => {
+                // 1. Lock the document being moved
+                const document = await trx
+                    .selectFrom('documents')
+                    .select(['id', 'path', 'workspace_id'])
+                    .where('id', '=', documentId)
+                    .where('workspace_id', '=', workspaceId)
+                    .forUpdate()
+                    .executeTakeFirst();
+                
+                if (!document) {
+                    throw new Error('Document not found');
+                }
+                
+                const oldPath = document.path;
+                
+                // 2. Determine new parent path
+                let newParentPath = 'root';
+                
+                if (newParentId) {
+                    const parent = await trx
+                        .selectFrom('documents')
+                        .select(['id', 'path'])
+                        .where('id', '=', newParentId)
+                        .where('workspace_id', '=', workspaceId)
+                        .forUpdate()
+                        .executeTakeFirst();
+                    
+                    if (!parent) {
+                        throw new Error('Parent document not found');
+                    }
+                    
+                    // 3. Cycle detection: ensure new parent is not a descendant
+                    // of the document being moved
+                    const isCycle = await trx
+                        .selectFrom('documents')
+                        .select(['id'])
+                        .where('workspace_id', '=', workspaceId)
+                        .where('path', '@>', oldPath)
+                        .where('id', '=', newParentId)
+                        .executeTakeFirst();
+                    
+                    if (isCycle) {
+                        throw new Error('Cannot move document into its own descendant');
+                    }
+                    
+                    newParentPath = parent.path;
+                }
+                
+                // 4. Calculate new path for the moved document
+                // Strip hyphens from UUID for ltree compatibility
+                const documentIdLabel = uuidToLtreeLabel(documentId);
+                const newPath = newParentPath === 'root'
+                    ? `root.${documentIdLabel}`
+                    : `${newParentPath}.${documentIdLabel}`;
+                
+                // 5. Update the document's path
+                await trx
+                    .updateTable('documents')
+                    .set({
+                        parent_id: newParentId,
+                        path: newPath,
+                        updated_at: new Date().toISOString(),
+                    })
+                    .where('id', '=', documentId)
+                    .execute();
+                
+                // 6. Update all descendants' paths atomically
+                // Using ltree's subpath function for path transformation
+                // Note: We need to use raw SQL for ltree operations
+                await trx.executeQuery(
+                    sql`
+                        UPDATE documents
+                        SET
+                            path = ${newPath}::ltree || subpath(path, nlevel(${oldPath}::ltree)),
+                            updated_at = NOW()
+                        WHERE
+                            workspace_id = ${workspaceId}
+                            AND path <@ ${oldPath}::ltree
+                            AND id != ${documentId}
+                    `.compile(trx)
+                );
+                
+                return { id: documentId, newPath };
+            });
+            
+            revalidatePath('/documents');
+            revalidatePath(`/documents/${documentId}`);
+            
+            return success(result);
+        } catch (error) {
+            console.error('Move document transaction error:', error);
+            const message = error instanceof Error ? error.message : 'Failed to move document';
+            return failure(message, 'DATABASE_ERROR');
         }
-
-        // Note: In a production system, you would also need to update
-        // all descendant documents' paths. This requires a transaction
-        // with recursive path updates. For V3.1 Phase 1, we keep it simple.
-
-        revalidatePath(`/workspace/[slug]`, 'page');
-
-        return success(data);
     } catch (error) {
         console.error('Unexpected error moving document:', error);
         return failure('An unexpected error occurred', 'INTERNAL_ERROR');
+    }
+}
+
+/**
+ * Get document tree for workspace (hierarchical structure)
+ */
+export async function getDocumentTree(
+    workspaceId: string
+): Promise<ActionResult<Array<{
+    id: string;
+    title: string;
+    parentId: string | null;
+    path: string;
+    isFolder: boolean;
+}>>> {
+    try {
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            return failure('Unauthorized', 'UNAUTHORIZED');
+        }
+        
+        // Use Kysely for better type safety and ordering
+        const documents = await db
+            .selectFrom('documents')
+            .select(['id', 'title', 'parent_id', 'path', 'is_template'])
+            .where('workspace_id', '=', workspaceId)
+            .where('is_archived', '=', false)
+            .orderBy(sql`nlevel(path)`, 'asc')
+            .orderBy('title', 'asc')
+            .execute();
+        
+        return success(
+            documents.map((d) => ({
+                id: d.id,
+                title: d.title,
+                parentId: d.parent_id,
+                path: d.path,
+                isFolder: d.is_template, // Using is_template as folder indicator
+            }))
+        );
+    } catch (error) {
+        console.error('Get document tree error:', error);
+        return failure('Failed to fetch document tree', 'DATABASE_ERROR');
     }
 }
 
