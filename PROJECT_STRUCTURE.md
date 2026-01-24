@@ -1,7 +1,7 @@
 # Project Structure: Command Center V3.1
 
-> **Status:** V3.1: Atomic Block Ingestion Layer Complete ✅
-> **Context:** V3.1 Architecture (Atomic Blocks, TipTap SSR, Kysely, Supabase SSR)
+> **Status:** V3.1 Phase 3 Task 9.3: Comprehensive Verification & Integration Tests Complete ✅
+> **Context:** V3.1 Architecture (Atomic Blocks, TipTap SSR, Kysely, Supabase SSR, Incremental GraphRAG with Enhanced Monitoring)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
 ## ASCII Directory Tree (3 Levels Deep)
@@ -45,11 +45,21 @@ comand-center/
 │           ├── 004_protocol_patch_commit.sql
 │           ├── 005_incremental_view_infrastructure.sql
 │           ├── 006_realtime_notification_channels.sql
+│           ├── 007_block_change_trigger.sql
+│           ├── 008_attach_block_trigger.sql
+│           ├── 009_knowledge_graph_upsert.sql
+│           ├── 010_embedding_optimization.sql
+│           ├── verify_007_008_triggers.sql
+│           ├── verify_009_knowledge_graph.sql
+│           ├── verify_010_embeddings.sql
+│           ├── verify_phase3_intelligence.sql
 │           └── verify_phase3_complete.sql
 ├── docs/
 │   ├── PERFORMANCE_PATTERNS.md
 │   ├── PERFORMANCE_REPORT.md
 │   └── phase6-progress.md
+├── plans/
+│   └── phase3_intelligence_layer_verification.md
 ├── public/
 ├── scripts/
 │   ├── check-phase3-status.js
@@ -61,12 +71,16 @@ comand-center/
 │   ├── verify-phase3-milestone-3.2.sh
 │   ├── verify-phase3-v1.1.js
 │   ├── verify-phase3-v1.1.sh
+│   ├── verify-phase3-week7-trigger.js
+│   ├── verify-phase3-week8-edge-function.js
 │   ├── verify-phase4.sh
-│   └── verify_phase_3.js
+│   ├── verify_phase_3.js
+│   └── test-semantic-integration.js
 ├── src/
 │   ├── __tests__/
 │   │   ├── performance-benchmark.ts
-│   │   └── phase4-integration.test.tsx
+│   │   ├── phase4-integration.test.tsx
+│   │   └── phase3-intelligence.test.ts
 │   ├── app/
 │   │   ├── (auth)/
 │   │   ├── (dashboard)/
@@ -126,7 +140,9 @@ comand-center/
 │   │   ├── supabase/
 │   │   │   ├── client.ts
 │   │   │   ├── hybrid-search.ts
+│   │   │   ├── index.ts
 │   │   │   ├── middleware.ts
+│   │   │   ├── semantic-search.ts
 │   │   │   └── server.ts
 │   │   ├── types/
 │   │   │   ├── hybrid-search.ts
@@ -162,6 +178,9 @@ comand-center/
 │   └── middleware.ts
 ├── supabase/
 │   ├── functions/
+│   │   └── process-block/
+│   │       ├── index.ts
+│   │       └── README.md
 │   ├── migrations/
 │   ├── .temp/
 │   ├── config.toml
@@ -214,6 +233,8 @@ comand-center/
 | Fractional Indexing | `src/lib/fractional-indexing.ts` | Lexicographic ordering for drag-drop reordering |
 | Real-time Sync | `src/lib/hooks/useRealtimeSync.ts` | PostgreSQL LISTEN/NOTIFY → Supabase Broadcast → TanStack Query |
 | Supabase SSR | `src/lib/supabase/` | Official @supabase/ssr patterns for Next.js App Router |
+| Incremental GraphRAG | `database/migrations/phase3/007_block_change_trigger.sql` | Real-time knowledge graph updates via async triggers and Edge Functions |
+| Enhanced GraphRAG Monitoring | `database/migrations/phase3/008_attach_block_trigger.sql` | Monitoring views, content hash indexing, and debounce logic for optimized processing |
 
 ### Key Logic Flows
 
@@ -225,6 +246,8 @@ comand-center/
 6. **Active Inference**: Protocol execution → Scaffold hydration → LLM calls → State transitions
 7. **WebGL Rendering**: Graph data → Web Worker physics → Instanced meshes → Single draw calls
 8. **Atomic Ingestion**: TipTap Block parsing → Row-level PostgreSQL inserts → Async Embedding triggers
+9. **Incremental GraphRAG**: Block change detection → SHA-256 hashing → pg_net async call → Edge Function processing → Entity extraction → Knowledge graph updates
+10. **Enhanced GraphRAG Monitoring**: Content hash indexing → Debounce logic → Queue monitoring → Performance optimization → Real-time visibility
 
 ---
 
@@ -234,7 +257,7 @@ comand-center/
 
 ### Project Evolution
 ```
-V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 2 ✅ (Current)
+V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 3 Task 9.3 ✅ (Current)
 ```
 
 ### Active Development Phases
@@ -254,7 +277,13 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 2 ✅ (Current)
 - [x] V3.1 Phase 3: Multi-Tenant RLS Policies ✅
 - [x] V3.1 Phase 4: Server Actions for Workspaces & Documents ✅
 - [x] V3.1 Phase 5: TipTap Editor Core Implementation ✅
-- [ ] V3.1 Phase 6: Real-time Synchronization & GraphRAG Integration (Next)
+- [x] V3.1 Phase 3 Week 7: Asynchronous Triggers for Incremental GraphRAG ✅
+- [x] V3.1 Phase 3 Task 7.2: Block Trigger Attachment with Monitoring ✅
+- [x] V3.1 Phase 3 Week 8: Entity Extraction Pipeline & Knowledge Graph Integration ✅
+- [x] V3.1 Phase 3 Task 9.1: Block Embedding Storage Optimization with HNSW Index ✅
+- [x] V3.1 Phase 3 Task 9.2: TypeScript Client Functions for Semantic Search ✅
+- [x] V3.1 Phase 3 Task 9.3: Comprehensive Verification & Integration Tests ✅
+- [ ] V3.1 Phase 6: Real-time Synchronization & GraphRAG Integration
 
 ### Key Entry Points
 | Context | Path |
@@ -299,12 +328,12 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 2 ✅ (Current)
    - **⚠️ Impact**: Identifier and path logic bugs cache-poison the database across all modules
 
 ### Recent Context (Last 5 Sessions)
-1. V3.1 Phase 5: TipTap Editor Core Implementation with Atomic Folder Operations ✅
-2. V3.1 Phase 4: Server Actions for Workspace & Document CRUD ✅
-3. V3.1 Phase 3: Identity & Access Automation (RLS + Auto-membership Triggers) ✅
-4. V3.1 Phase 2: Atomic Block Ingestion Layer & Type-Safe SQL ✅
-5. Unified `ActionResult` pattern for robust application-layer error handling
+1. V3.1 Phase 3 Task 9.3: Comprehensive Verification & Integration Tests ✅
+2. V3.1 Phase 3 Task 9.2: TypeScript Client Functions for Semantic Search ✅
+3. V3.1 Phase 3 Task 9.1: Block Embedding Storage Optimization with HNSW Index ✅
+4. V3.1 Phase 3 Week 8: Entity Extraction Pipeline & Knowledge Graph Integration ✅
+5. V3.1 Phase 3 Week 7: Asynchronous Triggers for Incremental GraphRAG ✅
 
 ---
 
-*Last Updated: 2026-01-24 (V3.1 Phase 5 Complete ✅)*
+*Last Updated: 2026-01-24 (V3.1 Phase 3 Task 9.3 Complete ✅)*

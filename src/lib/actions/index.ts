@@ -28,3 +28,13 @@ export {
     getDocumentBlocks,
     deleteBlock,
 } from './block-actions';
+
+// Semantic search actions
+export {
+    searchBlocksSemanticAction,
+    getEmbeddingStatsAction,
+    queueStaleEmbeddingsAction,
+    getEmbeddingHealthAction,
+    isSemanticSearchAvailable,
+    regenerateBlockEmbedding,
+} from './semantic-actions';
