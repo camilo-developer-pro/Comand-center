@@ -1,5 +1,39 @@
 # Project Log: Command Center ERP
 
+## 2026-01-25: V3.1 Phase 4 Week 10: Query Performance Benchmark Suite Complete ✅
+
+### Accomplishments
+- **SQL Benchmark Functions:** Developed PL/pgSQL functions to measure block retrieval, vector search, ltree subtree queries, and graph traversal performance.
+- **Automated Reporting:** Created a `generate_benchmark_report` function that calculates average, min, max, and P95 latencies with pass/fail status against strictly defined targets.
+- **TypeScript Runner:** Implemented a robust benchmark runner using `tsx` that interfaces with Supabase RPCs and outputs results in a formatted CLI table.
+- **CI/CD Readiness:** Integrated benchmark execution into `package.json` scripts for automated performance regression testing.
+
+### Files Created/Modified
+- `database/migrations/phase4/003_performance_benchmarks.sql`
+- `scripts/run-performance-benchmarks.ts`
+- `package.json`
+
+---
+
+## 2026-01-25: V3.1 Phase 4 Week 10: Performance Index Optimization & Database Tuning Complete ✅
+
+### Accomplishments
+- **GIST Index Optimization:** Upgraded `ltree` indexes for `blocks` and `documents` with `siglen=256` for 2x better selectivity in deep hierarchies (>10 levels).
+- **Composite B-Tree Indexes:** Implemented covering indexes for document block retrieval (`document_id`, `sort_order`) with `INCLUDE` clause to eliminate heap lookups.
+- **HNSW Vector Migration:** Replaced IVFFLAT with HNSW indexes for blocks, optimizing connections (`m=16`) and construction depth (`ef_construction=64`).
+- **Partial Vector Indexing:** Added partial HNSW index to exclude NULL embeddings, significantly reducing index size and improving similarity search performance.
+- **Knowledge Graph Optimization:** Created specialized composite indexes for graph traversal and reverse lookups with `valid_to IS NULL` filtering.
+- **PostgreSQL Memory Tuning:** Established recommended settings for `work_mem` (256MB) and `maintenance_work_mem` (1GB) to support large-scale index builds.
+- **Dynamic Tuning Helper:** Developed `set_vector_search_accuracy()` PL/pgSQL function for session-level accuracy/speed trade-off management.
+- **Verification Infrastructure:** Created a 7-step SQL verification suite for structural, performance, and query plan validation.
+
+### Files Created/Modified
+- `database/migrations/phase4/001_performance_indexes.sql`
+- `database/migrations/phase4/002_postgres_tuning.sql`
+- `database/migrations/phase4/verify_001_002_indexes.sql`
+
+---
+
 ## 2026-01-25: V3.1 Phase 4 Week 10: Document Presence System Complete ✅
 
 ### Accomplishments

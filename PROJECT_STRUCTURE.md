@@ -1,6 +1,6 @@
 # Project Structure: Command Center V3.1
 
-> **Status:** V3.1 Phase 4 Week 10: Document Presence System Complete ✅
+> **Status:** V3.1 Phase 4 Week 11: Performance Optimization & Benchmarking Complete ✅
 > **Context:** V3.1 Architecture (Atomic Blocks, TipTap SSR, Kysely, Supabase SSR, Incremental GraphRAG with Enhanced Monitoring)
 > **Map Protocol:** This file is the Source of Truth. Update it when adding/moving files.
 
@@ -32,13 +32,32 @@ comand-center/
 │       │   ├── 017_search_hybrid_v3.sql
 │       │   ├── verify_014_hybrid_graphrag.sql
 │       │   ├── verify_015_vector_search.sql
-│       │   ├── verify_016_graph_expansion.sql
-│       │   ├── verify_017_search_hybrid_v3.sql
-│       │   ├── verify_extensions.sql
-│       │   ├── verify_phase1_complete.sql
-│       │   ├── DEPLOYMENT_RUNBOOK.md
-│       │   └── rollback_phase1.sql
-│       └── phase3/
+│           ├── 001_extensions.sql
+│           ├── 002_schemas.sql
+│           ├── 003_roles.sql
+│           ├── 004_uuidv7_function.sql
+│           ├── 005_fractional_indexing.sql
+│           ├── 006_episodic_memory_schema.sql
+│           ├── 007_episodic_partman_setup.sql
+│           ├── 008_semantic_memory_schema.sql
+│           ├── 009_procedural_memory_schema.sql
+│           ├── 010_entity_resolution_trigger.sql
+│           ├── 011_dual_write_infrastructure.sql
+│           ├── 012_logs_migration.sql
+│           ├── 013_entity_backfill_resolution.sql
+│           ├── 014_hybrid_graphrag_indexes.sql
+│           ├── 015_vector_search_component.sql
+│           ├── 016_graph_expansion_component.sql
+│           ├── 017_search_hybrid_v3.sql
+│           ├── verify_014_hybrid_graphrag.sql
+│           ├── verify_015_vector_search.sql
+│           ├── verify_016_graph_expansion.sql
+│           ├── verify_017_search_hybrid_v3.sql
+│           ├── verify_extensions.sql
+│           ├── verify_phase1_complete.sql
+│           ├── DEPLOYMENT_RUNBOOK.md
+│           └── rollback_phase1.sql
+│       ├── phase3/
 │           ├── 001_error_taxonomy_schema.sql
 │           ├── 002_diagnostic_engine.sql
 │           ├── 003_seed_meta_agent_protocol.sql
@@ -54,6 +73,11 @@ comand-center/
 │           ├── verify_010_embeddings.sql
 │           ├── verify_phase3_intelligence.sql
 │           └── verify_phase3_complete.sql
+│       └── phase4/
+│           ├── 001_performance_indexes.sql
+│           ├── 002_postgres_tuning.sql
+│           ├── 003_performance_benchmarks.sql
+│           └── verify_001_002_indexes.sql
 ├── docs/
 │   ├── PERFORMANCE_PATTERNS.md
 │   ├── PERFORMANCE_REPORT.md
@@ -64,6 +88,7 @@ comand-center/
 ├── scripts/
 │   ├── check-phase3-status.js
 │   ├── phase6-performance-test.ts
+│   ├── run-performance-benchmarks.ts
 │   ├── verify-auth-setup.sh
 │   ├── verify-pg-cron-setup.sh
 │   ├── verify-phase1-v1.1.sh
@@ -223,7 +248,7 @@ comand-center/
 ### @vibe-critical Tagged Files
 
 > ⚠️ **Scan Result**: No files currently contain `// @vibe-critical` markers.
-> 
+>
 > **Convention**: Add `// @vibe-critical` comments to files with complex, mission-critical logic that warrants extra documentation.
 
 ### Core Architecture Patterns
@@ -252,6 +277,7 @@ comand-center/
 8. **Atomic Ingestion**: TipTap Block parsing → Row-level PostgreSQL inserts → Async Embedding triggers
 9. **Incremental GraphRAG**: Block change detection → SHA-256 hashing → pg_net async call → Edge Function processing → Entity extraction → Knowledge graph updates
 10. **Enhanced GraphRAG Monitoring**: Content hash indexing → Debounce logic → Queue monitoring → Performance optimization → Real-time visibility
+11. **Performance Benchmarking**: PL/pgSQL benchmark functions → Avg/Min/Max/P95 latency calculation → TypeScript runner → Automated status reporting
 
 ---
 
@@ -288,7 +314,8 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 4 Week 10 ✅ (Current)
 - [x] V3.1 Phase 3 Task 9.2: TypeScript Client Functions for Semantic Search ✅
 - [x] V3.1 Phase 3 Task 9.3: Comprehensive Verification & Integration Tests ✅
 - [x] V3.1 Phase 4 Week 10: Document Presence System ✅
-- [ ] V3.1 Phase 6: Real-time Synchronization & GraphRAG Integration
+- [x] V3.1 Phase 4 Week 11: Performance Optimization & Benchmarking ✅
+- [ ] V3.1 Phase 5: Real-time Synchronization & GraphRAG Integration (Pillars 2 & 3)
 
 ### Key Entry Points
 | Context | Path |
@@ -333,12 +360,12 @@ V1.0 → V1.1 → V2.0 → V2.1 → V3.0 → V3.1 Phase 4 Week 10 ✅ (Current)
    - **⚠️ Impact**: Identifier and path logic bugs cache-poison the database across all modules
 
 ### Recent Context (Last 5 Sessions)
-1. V3.1 Phase 4 Week 10: Document Presence System ✅
-2. V3.1 Phase 3 Task 9.3: Comprehensive Verification & Integration Tests ✅
-3. V3.1 Phase 3 Task 9.2: TypeScript Client Functions for Semantic Search ✅
-4. V3.1 Phase 3 Task 9.1: Block Embedding Storage Optimization with HNSW Index ✅
-5. V3.1 Phase 3 Week 8: Entity Extraction Pipeline & Knowledge Graph Integration ✅
+1. V3.1 Phase 4 Week 11: Performance Optimization & Benchmarking ✅
+2. V3.1 Phase 4 Week 10: Document Presence System ✅
+3. V3.1 Phase 3 Task 9.3: Comprehensive Verification & Integration Tests ✅
+4. V3.1 Phase 3 Task 9.2: TypeScript Client Functions for Semantic Search ✅
+5. V3.1 Phase 3 Task 9.1: Block Embedding Storage Optimization with HNSW Index ✅
 
 ---
 
-*Last Updated: 2026-01-25 (V3.1 Phase 4 Week 10 Complete ✅)*
+*Last Updated: 2026-01-25 (V3.1 Phase 4 Week 11 Complete ✅)*

@@ -17,7 +17,9 @@
     "test": "vitest",
     "test:phase4": "vitest src/__tests__/phase4-integration.test.tsx --coverage",
     "test:performance": "vitest src/__tests__/performance-benchmark.ts",
-    "test:all": "vitest --coverage"
+    "test:all": "vitest --coverage",
+    "benchmark": "tsx scripts/run-performance-benchmarks.ts",
+    "benchmark:ci": "tsx scripts/run-performance-benchmarks.ts $TEST_WORKSPACE_ID"
   },
   "dependencies": {
     "@blocknote/core": "^0.46.1",
