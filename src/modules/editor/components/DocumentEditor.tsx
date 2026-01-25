@@ -3,10 +3,11 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { Editor } from '@tiptap/core';
 import { AtomicIngestionEditor } from './AtomicIngestionEditor';
-import { SyncStatus } from './SyncStatus';
+import { DocumentHeader } from './DocumentHeader';
 import { useBlockSync } from '../hooks/useBlockSync';
 import { useBlockExtractor } from '../hooks/useBlockExtractor';
 import { BlockNode } from '../types/block.types';
+import type { UserPresence } from '@/lib/realtime/presence-types';
 
 interface DocumentEditorProps {
   documentId: string;
@@ -27,9 +28,11 @@ export function DocumentEditor({
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
   const [errorCount, setErrorCount] = useState(0);
-  
+  const [documentTitle, setDocumentTitle] = useState(title || 'Untitled');
+  const [otherUsers, setOtherUsers] = useState<UserPresence[]>([]);
+
   const { extractBlocks, getChangedBlocks } = useBlockExtractor();
-  
+
   const {
     blocks: savedBlocks,
     isLoading: isLoadingBlocks,
@@ -43,7 +46,7 @@ export function DocumentEditor({
     documentId,
     debounceMs: 1000,
   });
-  
+
   // Update sync status tracking
   useEffect(() => {
     if (isSuccess && !isSyncing) {
@@ -54,14 +57,14 @@ export function DocumentEditor({
       setErrorCount(prev => prev + 1);
     }
   }, [isSuccess, isError, isSyncing]);
-  
+
   // Handle blocks change from editor
   const handleBlocksChange = useCallback((currentBlocks: BlockNode[]) => {
     const { added, modified, deleted } = getChangedBlocks(
       previousBlocksRef.current,
       currentBlocks
     );
-    
+
     // Only sync if there are actual changes
     if (added.length > 0 || modified.length > 0 || deleted.length > 0) {
       console.log('[DocumentEditor] Changes detected:', {
@@ -69,23 +72,23 @@ export function DocumentEditor({
         modified: modified.length,
         deleted: deleted.length,
       });
-      
+
       sync(currentBlocks, deleted);
       setHasPendingChanges(true);
       previousBlocksRef.current = currentBlocks;
     }
   }, [getChangedBlocks, sync]);
-  
+
   // Handle editor ready
   const handleEditorReady = useCallback((editor: Editor) => {
     editorRef.current = editor;
     setIsEditorReady(true);
-    
+
     // Extract initial blocks
     const initialBlocks = extractBlocks(editor);
     previousBlocksRef.current = initialBlocks;
   }, [extractBlocks]);
-  
+
   // Keyboard shortcut for manual save (Cmd+S)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,11 +100,11 @@ export function DocumentEditor({
         }
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [extractBlocks, syncNow]);
-  
+
   // Sync before page unload
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -115,15 +118,15 @@ export function DocumentEditor({
         e.returnValue = '';
       }
     };
-    
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasPendingChanges, extractBlocks, syncNow]);
-  
+
   // Convert saved blocks to TipTap content format
   const getInitialContent = useCallback(() => {
     if (initialContent) return initialContent;
-    
+
     if (savedBlocks && savedBlocks.length > 0) {
       return {
         type: 'doc',
@@ -132,10 +135,10 @@ export function DocumentEditor({
           .map((block) => block.content),
       };
     }
-    
+
     return undefined;
   }, [initialContent, savedBlocks]);
-  
+
   if (isLoadingBlocks) {
     return (
       <div className={className}>
@@ -148,27 +151,25 @@ export function DocumentEditor({
       </div>
     );
   }
-  
+
   return (
     <div className={className}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b dark:border-gray-800">
-        <h1 className="text-lg font-semibold truncate text-gray-900 dark:text-gray-100">
-          {title || 'Untitled'}
-        </h1>
-        <SyncStatus
-          documentId={documentId}
-          showLabel={true}
-          size="md"
-        />
-      </div>
-      
+      <DocumentHeader
+        title={documentTitle}
+        onTitleChange={setDocumentTitle}
+        otherUsers={otherUsers}
+        lastSaved={lastSyncAt}
+        isSaving={isSyncing}
+      />
+
       {/* Editor */}
       <AtomicIngestionEditor
         documentId={documentId}
         initialContent={getInitialContent()}
         onBlocksChange={handleBlocksChange}
         onEditorReady={handleEditorReady}
+        onPresenceChange={setOtherUsers}
         placeholder="Start writing..."
         className="flex-1"
       />

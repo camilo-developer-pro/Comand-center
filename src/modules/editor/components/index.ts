@@ -42,6 +42,10 @@ export type { DocumentTreeProps } from './DocumentTree';
 
 // Status indicators
 export { SaveStatusIndicator } from './SaveStatusIndicator';
+export { RemoteCursor } from './RemoteCursor';
+export { TypingIndicator } from './TypingIndicator';
+export { PresenceAvatarStack } from './PresenceAvatarStack';
+export { DocumentHeader } from './DocumentHeader';
 export {
     SyncStatus,
     InlineSyncStatus,
