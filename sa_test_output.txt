@@ -1,0 +1,13 @@
+🚀 Starting Concurrent Edit Stress Test (PG Direct)...
+✅ Setup complete. Workspace: 019bf7a9-926c-758a-b5d1-0fa7c5627273, Document: 019bf7a9-92b9-7420-9ca4-1dd44fc1dfda
+
+--- Test 1: 50 Concurrent Block Insertions ---
+Results: 50/50 successful in 748ms
+Collisions detected: 0
+
+--- Test 2: Concurrent Folder Moves (Hierarchical) ---
+Results: 50/50 successful
+Concurrency conflicts (deadlock/serialization): 0
+
+--- Cleanup ---
+✅ Cleanup complete

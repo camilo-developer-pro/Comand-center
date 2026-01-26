@@ -1,0 +1,67 @@
+--- Inspecting Table: entity_edges ---
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "source_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "source_type",
+    "data_type": "text"
+  },
+  {
+    "column_name": "target_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "target_type",
+    "data_type": "text"
+  },
+  {
+    "column_name": "relation_type",
+    "data_type": "text"
+  },
+  {
+    "column_name": "workspace_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "properties",
+    "data_type": "jsonb"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone"
+  }
+]
+
+--- Inspecting Constraints: entity_edges ---
+[
+  {
+    "conname": "entity_edges_pkey",
+    "def": "PRIMARY KEY (id)"
+  },
+  {
+    "conname": "entity_edges_source_id_target_id_relation_type_key",
+    "def": "UNIQUE (source_id, target_id, relation_type)"
+  },
+  {
+    "conname": "entity_edges_source_type_check",
+    "def": "CHECK ((source_type = ANY (ARRAY['document'::text, 'lead'::text, 'user'::text, 'task'::text, 'item'::text])))"
+  },
+  {
+    "conname": "entity_edges_target_type_check",
+    "def": "CHECK ((target_type = ANY (ARRAY['document'::text, 'lead'::text, 'user'::text, 'task'::text, 'item'::text])))"
+  },
+  {
+    "conname": "entity_edges_workspace_id_fkey",
+    "def": "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE"
+  }
+]

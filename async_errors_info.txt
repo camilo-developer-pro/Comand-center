@@ -1,0 +1,11 @@
+--- Inspecting Table: async_processing_errors ---
+[
+  {
+    "conname": "async_processing_errors_block_id_fkey",
+    "def": "FOREIGN KEY (block_id) REFERENCES blocks(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "async_processing_errors_pkey",
+    "def": "PRIMARY KEY (id)"
+  }
+]

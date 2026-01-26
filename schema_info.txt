@@ -1,0 +1,173 @@
+--- Inspecting Table: documents ---
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "title",
+    "data_type": "text",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "content",
+    "data_type": "jsonb",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "workspace_id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "widget_index",
+    "data_type": "ARRAY",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "search_vector",
+    "data_type": "tsvector",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "is_archived",
+    "data_type": "boolean",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "parent_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "icon",
+    "data_type": "character varying",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "cover_image_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "is_template",
+    "data_type": "boolean",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "archived_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "last_edited_by",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "path",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "NO"
+  }
+]
+
+--- Inspecting Constraints: documents ---
+[
+  {
+    "conname": "documents_workspace_id_fkey",
+    "def": "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "documents_pkey",
+    "def": "PRIMARY KEY (id)"
+  },
+  {
+    "conname": "documents_parent_id_fkey",
+    "def": "FOREIGN KEY (parent_id) REFERENCES documents(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "documents_last_edited_by_fkey",
+    "def": "FOREIGN KEY (last_edited_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+  },
+  {
+    "conname": "documents_created_by_fkey",
+    "def": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+  }
+]
+
+--- Inspecting Triggers: documents ---
+[
+  {
+    "tgname": "RI_ConstraintTrigger_a_18415"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_18416"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_19898"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_19899"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_29887"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_29888"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_29918"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_29919"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_17678"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_17679"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_17683"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_17684"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29889"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29890"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29896"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29897"
+  },
+  {
+    "tgname": "extract_mentions_on_document_change"
+  },
+  {
+    "tgname": "on_document_created"
+  },
+  {
+    "tgname": "update_documents_updated_at"
+  }
+]

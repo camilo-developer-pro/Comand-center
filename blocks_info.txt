@@ -1,0 +1,131 @@
+--- Inspecting Table: blocks ---
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "document_id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "parent_path",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "type",
+    "data_type": "character varying",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "content",
+    "data_type": "jsonb",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "sort_order",
+    "data_type": "character varying",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "embedding",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "content_hash",
+    "data_type": "character varying",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "embedding_updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "last_edited_by",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  }
+]
+
+--- Inspecting Constraints: blocks ---
+[
+  {
+    "conname": "blocks_created_by_fkey",
+    "def": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+  },
+  {
+    "conname": "blocks_document_id_fkey",
+    "def": "FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "blocks_last_edited_by_fkey",
+    "def": "FOREIGN KEY (last_edited_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+  },
+  {
+    "conname": "blocks_pkey",
+    "def": "PRIMARY KEY (id)"
+  }
+]
+
+--- Inspecting Triggers: blocks ---
+[
+  {
+    "tgname": "RI_ConstraintTrigger_a_29958"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_29959"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_36169"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_36170"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29920"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29921"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29925"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29926"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29930"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_29931"
+  },
+  {
+    "tgname": "trg_block_content_changed"
+  },
+  {
+    "tgname": "trigger_notify_block_change"
+  },
+  {
+    "tgname": "update_blocks_updated_at"
+  }
+]

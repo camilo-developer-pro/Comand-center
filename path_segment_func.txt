@@ -1,0 +1,33 @@
+
+DECLARE
+    cleaned_name TEXT;
+    random_suffix TEXT;
+    final_segment TEXT;
+BEGIN
+    -- Convert to lowercase
+    cleaned_name := LOWER(item_name);
+    
+    -- Replace spaces with underscores
+    cleaned_name := REPLACE(cleaned_name, ' ', '_');
+    
+    -- Remove non-alphanumeric characters (except underscores)
+    cleaned_name := REGEXP_REPLACE(cleaned_name, '[^a-z0-9_]', '', 'g');
+    
+    -- Truncate to reasonable length (ltree labels max 256 chars)
+    cleaned_name := LEFT(cleaned_name, 50);
+    
+    -- Handle empty string case
+    IF cleaned_name = '' OR cleaned_name IS NULL THEN
+        cleaned_name := 'item';
+    END IF;
+    
+    -- Generate 4-character random suffix for uniqueness
+    -- Using alphanumeric characters only
+    random_suffix := LOWER(SUBSTRING(MD5(RANDOM()::TEXT || CLOCK_TIMESTAMP()::TEXT) FROM 1 FOR 4));
+    
+    -- Prepend 'item_' prefix to avoid ltree reserved words
+    -- Append random suffix to ensure uniqueness
+    final_segment := 'item_' || cleaned_name || '_' || random_suffix;
+    
+    RETURN final_segment;
+END;

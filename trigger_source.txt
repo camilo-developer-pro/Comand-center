@@ -1,0 +1,162 @@
+--- Function: RI_FKey_cascade_del ---
+RI_FKey_cascade_del
+
+--- Function: RI_FKey_noaction_upd ---
+RI_FKey_noaction_upd
+
+--- Function: RI_FKey_cascade_del ---
+RI_FKey_cascade_del
+
+--- Function: RI_FKey_noaction_upd ---
+RI_FKey_noaction_upd
+
+--- Function: RI_FKey_cascade_del ---
+RI_FKey_cascade_del
+
+--- Function: RI_FKey_noaction_upd ---
+RI_FKey_noaction_upd
+
+--- Function: RI_FKey_cascade_del ---
+RI_FKey_cascade_del
+
+--- Function: RI_FKey_noaction_upd ---
+RI_FKey_noaction_upd
+
+--- Function: RI_FKey_check_ins ---
+RI_FKey_check_ins
+
+--- Function: RI_FKey_check_upd ---
+RI_FKey_check_upd
+
+--- Function: RI_FKey_check_ins ---
+RI_FKey_check_ins
+
+--- Function: RI_FKey_check_upd ---
+RI_FKey_check_upd
+
+--- Function: RI_FKey_check_ins ---
+RI_FKey_check_ins
+
+--- Function: RI_FKey_check_upd ---
+RI_FKey_check_upd
+
+--- Function: RI_FKey_check_ins ---
+RI_FKey_check_ins
+
+--- Function: RI_FKey_check_upd ---
+RI_FKey_check_upd
+
+--- Function: sync_document_mentions ---
+
+DECLARE
+    ws_id UUID;
+    curr_mentions UUID[];
+BEGIN
+    -- Only process if content changed
+    IF (TG_OP = 'UPDATE' AND NEW.content IS NOT DISTINCT FROM OLD.content) THEN
+        RETURN NEW;
+    END IF;
+
+    -- Get workspace_id from items table
+    SELECT workspace_id INTO ws_id FROM items WHERE document_id = NEW.id LIMIT 1;
+    
+    IF ws_id IS NULL THEN
+        RAISE WARNING 'No workspace found for document %, skipping mention sync', NEW.id;
+        RETURN NEW;
+    END IF;
+
+    -- 1. Extract current mentions into an array
+    SELECT array_agg(DISTINCT mentioned_id) INTO curr_mentions
+    FROM extract_mentions_from_content(NEW.content);
+
+    -- 2. DELETE edges that no longer exist
+    DELETE FROM entity_edges
+    WHERE source_id = NEW.id
+      AND source_type = 'document'
+      AND relation_type = 'mentions'
+      AND (curr_mentions IS NULL OR target_id != ALL(curr_mentions));
+
+    -- 3. INSERT new edges (if any exist)
+    IF curr_mentions IS NOT NULL THEN
+        INSERT INTO entity_edges (
+            source_id,
+            source_type,
+            target_id,
+            target_type,
+            relation_type,
+            workspace_id
+        )
+        SELECT 
+            NEW.id,
+            'document',
+            m.mentioned_id,
+            m.mentioned_type,
+            'mentions',
+            ws_id
+        FROM extract_mentions_from_content(NEW.content) m
+        ON CONFLICT (source_id, target_id, relation_type) DO NOTHING;
+    END IF;
+
+    RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'Error in sync_document_mentions for doc %: %', NEW.id, SQLERRM;
+    RETURN NEW;
+END;
+
+
+--- Function: on_document_created_create_item ---
+
+DECLARE
+    item_name TEXT;
+    item_path TEXT;
+    path_segment TEXT;
+BEGIN
+    -- Only create item if one doesn't already exist for this document
+    IF NOT EXISTS (SELECT 1 FROM items WHERE document_id = NEW.id) THEN
+        -- Use document title or 'Untitled'
+        item_name := COALESCE(NULLIF(TRIM(NEW.title), ''), 'Untitled');
+        
+        -- Generate unique path segment
+        path_segment := generate_path_segment(item_name);
+        
+        -- Create root-level path
+        item_path := 'root.' || path_segment || '_' || LEFT(NEW.id::TEXT, 8);
+        
+        -- Insert into items table
+        INSERT INTO items (
+            name,
+            item_type,
+            path,
+            workspace_id,
+            created_by,
+            document_id,
+            parent_id,
+            sort_order,
+            created_at,
+            updated_at
+        ) VALUES (
+            item_name,
+            'document',
+            item_path::ltree,
+            NEW.workspace_id,
+            NEW.created_by,
+            NEW.id,
+            NULL,
+            0,
+            NEW.created_at,
+            NOW()
+        );
+    END IF;
+    
+    RETURN NEW;
+END;
+
+
+--- Function: update_updated_at ---
+
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+
+

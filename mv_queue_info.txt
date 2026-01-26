@@ -1,0 +1,35 @@
+--- Inspecting Table: mv_refresh_queue ---
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "view_name",
+    "data_type": "text"
+  },
+  {
+    "column_name": "workspace_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "requested_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "processed_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "trigger_source",
+    "data_type": "text"
+  }
+]
+
+--- Inspecting Constraints: mv_refresh_queue ---
+[
+  {
+    "conname": "mv_refresh_queue_pkey",
+    "def": "PRIMARY KEY (id)"
+  }
+]

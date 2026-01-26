@@ -1,0 +1,9 @@
+🚀 Starting Fractional Index Stress Test...
+
+--- Test 1: 1000 Insertions at Same Position ---
+Unique keys generated: 1000/1000
+
+--- Test 2: Deep Nesting Sortability ---
+✅ Sortability maintained for 500 levels
+
+✅ All fractional index stress tests passed!

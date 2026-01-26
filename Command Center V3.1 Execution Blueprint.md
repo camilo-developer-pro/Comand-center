@@ -245,26 +245,16 @@ This roadmap transitions the system from concept to V3.1 production, prioritizin
 * **Week 3: Auth & Access Control**  
   * Implement Supabase Row-Level Security (RLS) policies.  
   * *Policy Rule:* Users can only SELECT/UPDATE blocks where document\_id belongs to a workspace they are a member of.  
-  * **Milestone:** Verified security; user cannot query another workspace's blocks.
+  * **Milestone:** Verified security; user cannot query another workspace's blocks. ✅
 
 ### **Phase 2: The Ingestion Engine (Weeks 4-6)**
 
 **Goal:** Replace the editor backend with the Atomic Ingestion Layer.
 
-* **Week 4: TipTap Custom Extensions**  
-  * Develop BlockIDExtension: Assigns a UUID to every node upon creation in the editor.  
-  * Develop FractionalIndexExtension: Calculates sort order on the client side using the Base62 utility.  
-  * **Milestone:** TipTap editor maintains persistent IDs for paragraphs.  
-* **Week 5: Sync API & Server Actions**  
-  * Implement saveBlock(id, content) Server Action.  
-  * Implement useOptimistic hook in Next.js to reflect changes instantly.  
-  * Implement the Debounce logic (1000ms).  
-  * **Milestone:** Typing in the editor saves to Postgres blocks table.  
-* **Week 6: Reordering & Hierarchy**  
-  * Implement drag-and-drop UI (dnd-kit).  
-  * Implement moveBlock Server Action (Fractional Index update).  
-  * Implement moveFolder Server Action (Transactional ltree update).  
-  * **Milestone:** Dragging items persists order and hierarchy correctly.
+* **Week 4: TipTap Custom Extensions** [x]
+* **Week 5: Sync API & Server Actions** [x]
+* **Week 6: Reordering & Hierarchy** [x]
+* **Milestone: Dragging items persists order and hierarchy correctly. ✅**
 
 ### **Phase 3: The Intelligence Layer (Weeks 7-9)**
 
@@ -282,7 +272,7 @@ This roadmap transitions the system from concept to V3.1 production, prioritizin
 * **Week 9: Vector Embeddings**  
   * Integrate OpenAI Embeddings API into the same Edge Function.  
   * Store result in blocks.embedding.  
-  * **Milestone:** Vector search returns relevant blocks.
+  * **Milestone:** Vector search returns relevant blocks. ✅
 
 ### **Phase 4: Orchestration & Production (Weeks 10-12)**
 
@@ -300,7 +290,7 @@ This roadmap transitions the system from concept to V3.1 production, prioritizin
 * **Week 12: Load Testing & Handover**  
   * Simulate concurrent edits to verify locking strategies.  
   * Finalize documentation and SOPs.  
-  * **Milestone:** Production Launch.
+  * **Milestone:** Production Launch. ✅
 
 ## ---
 

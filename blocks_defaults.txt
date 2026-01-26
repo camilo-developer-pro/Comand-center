@@ -1,0 +1,10 @@
+[
+  {
+    "column_name": "created_at",
+    "column_default": "now()"
+  },
+  {
+    "column_name": "updated_at",
+    "column_default": "now()"
+  }
+]

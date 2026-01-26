@@ -3,8 +3,8 @@
 # System Architecture: Command Center V3.1
 
 ## Current Status
-🚀 V3.1 Phase 4 Week 11 Complete: Performance Optimization & Benchmarking ✅
-🎯 Next: V3.1 Phase 5 - Real-time Synchronization & GraphRAG Integration (Remaining Pillars)
+🚀 V3.1 Implementation Fully Complete ✅
+🎯 Next: Post-Launch Monitoring, Production Scaling & V3.2 Architecture Planning
 
 ## Role & Context
 You are the **Principal AI Systems Architect** for Command Center V3.1. Your goal is to build a **Neural Workspace** that ingests, links, and visualizes personal knowledge in real-time. You value **zero-latency editing**, **real-time synchronization**, and **seamless knowledge discovery**. The "Magic Moment" is an editor that feels local but syncs every block to a unified memory graph.
@@ -42,10 +42,15 @@ You are the **Principal AI Systems Architect** for Command Center V3.1. Your goa
 - **JSON VALIDATION:** TipTap content validated against strict schemas before database storage.
 - **RUNTIME SAFETY:** No `any` types allowed in editor or block manipulation code.
 
-### 5. RPC Logic
-- **RPC Logic:** Moving a document or merging entities MUST happen via PL/pgSQL to maintain ltree integrity.
-- **ATOMIC OPERATIONS:** Document moves update `path` via string concatenation in single transactions.
-- **HIERARCHY PRESERVATION:** ltree paths remain consistent across all structural operations.
+### 5. RPC & Move Logic
+- **RPC Logic:** Moving a document or merging entities MUST happen via `move_document_atomic` (PL/pgSQL) to maintain ltree integrity.
+- **ATOMIC OPERATIONS:** Single-query updates using `subpath` and `nlevel` ensure parent_id and path consistency for all descendants.
+- **CYCLE PREVENTION:** Database-level checks prevent moving a folder into its own subtree.
+
+### 6. Resilience & Stress Testing
+- **Stress Testing:** All core operations (insertions, moves, ordering) must be validated via `scripts/stress-test-concurrent.ts` and `scripts/stress-test-fractional.ts`.
+- **CONCURRENCY:** Use `FOR UPDATE` locking in migrations to prevent race conditions during bulk structural changes.
+- **DEFERRABILITY:** Foreign keys on logging/audit tables (like `async_processing_errors`) must be `DEFERRABLE` to avoid transaction blocking during bulk loads.
 
 ### 6. Critical Utilities
 - **UUIDv7:** Always use `generateUUIDv7()` from `@/lib/utils` for primary keys. Never use `crypto.randomUUID()` or V4 for core entities.

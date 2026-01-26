@@ -1,0 +1,153 @@
+--- Inspecting Table: items ---
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "item_type",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "path",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "workspace_id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "document_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "parent_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "sort_order",
+    "data_type": "integer",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "rank_key",
+    "data_type": "text",
+    "is_nullable": "NO"
+  }
+]
+
+--- Inspecting Constraints: items ---
+[
+  {
+    "conname": "document_requires_document_id",
+    "def": "CHECK (((item_type <> 'document'::item_type) OR (document_id IS NOT NULL)))"
+  },
+  {
+    "conname": "folder_no_document",
+    "def": "CHECK (((item_type <> 'folder'::item_type) OR (document_id IS NULL)))"
+  },
+  {
+    "conname": "items_created_by_fkey",
+    "def": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+  },
+  {
+    "conname": "items_document_id_fkey",
+    "def": "FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "items_parent_id_fkey",
+    "def": "FOREIGN KEY (parent_id) REFERENCES items(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "items_pkey",
+    "def": "PRIMARY KEY (id)"
+  },
+  {
+    "conname": "items_unique_rank_per_parent",
+    "def": "UNIQUE (parent_id, rank_key) DEFERRABLE INITIALLY DEFERRED"
+  },
+  {
+    "conname": "items_workspace_id_fkey",
+    "def": "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "unique_workspace_path",
+    "def": "UNIQUE (workspace_id, path)"
+  },
+  {
+    "conname": "valid_path_format",
+    "def": "CHECK (((path)::text ~ '^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)*$'::text))"
+  }
+]
+
+--- Inspecting Triggers: items ---
+[
+  {
+    "tgname": "RI_ConstraintTrigger_a_18420"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_a_18421"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18407"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18408"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18412"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18413"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18417"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18418"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18422"
+  },
+  {
+    "tgname": "RI_ConstraintTrigger_c_18423"
+  },
+  {
+    "tgname": "Unique_ConstraintTrigger_21078"
+  },
+  {
+    "tgname": "trg_capture_item_delta"
+  },
+  {
+    "tgname": "trg_items_refresh_stats"
+  },
+  {
+    "tgname": "update_items_updated_at_trigger"
+  }
+]

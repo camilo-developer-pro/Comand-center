@@ -1,0 +1,225 @@
+--- Function: RI_FKey_setnull_del ---
+RI_FKey_setnull_del
+
+--- Function: RI_FKey_noaction_upd ---
+RI_FKey_noaction_upd
+
+--- Function: RI_FKey_cascade_del ---
+RI_FKey_cascade_del
+
+--- Function: RI_FKey_noaction_upd ---
+RI_FKey_noaction_upd
+
+--- Function: RI_FKey_check_ins ---
+RI_FKey_check_ins
+
+--- Function: RI_FKey_check_upd ---
+RI_FKey_check_upd
+
+--- Function: RI_FKey_check_ins ---
+RI_FKey_check_ins
+
+--- Function: RI_FKey_check_upd ---
+RI_FKey_check_upd
+
+--- Function: RI_FKey_check_ins ---
+RI_FKey_check_ins
+
+--- Function: RI_FKey_check_upd ---
+RI_FKey_check_upd
+
+--- Function: fn_block_content_changed ---
+
+DECLARE
+    debounce_threshold INTERVAL := '5 seconds'::INTERVAL;  -- Prevent rapid-fire triggers
+    last_update_time TIMESTAMPTZ;
+    should_process BOOLEAN := FALSE;
+BEGIN
+    -- Determine if we should process this change
+    -- For INSERT operations, always process (new content)
+    -- For UPDATE operations, only process if content actually changed
+    IF TG_OP = 'INSERT' THEN
+        should_process := TRUE;
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Check if content actually changed (using content_hash comparison)
+        IF OLD.content_hash IS NULL OR
+           NEW.content_hash IS NULL OR
+           OLD.content_hash != NEW.content_hash OR
+           (OLD.content_hash IS DISTINCT FROM NEW.content_hash) THEN
+            should_process := TRUE;
+        END IF;
+    END IF;
+    
+    -- If no content change, just update timestamp and return
+    IF NOT should_process THEN
+        NEW.updated_at := NOW();
+        RETURN NEW;
+    END IF;
+    
+    -- Check if this is a rapid update (within debounce threshold)
+    -- This prevents excessive processing for rapid typing or bulk operations
+    IF TG_OP = 'UPDATE' THEN
+        -- Get the original updated_at before our trigger modifies it
+        last_update_time := OLD.updated_at;
+        
+        -- If this update is happening too soon after the last one, skip processing
+        -- but still allow the update to proceed
+        IF last_update_time IS NOT NULL AND
+           (NOW() - last_update_time) < debounce_threshold THEN
+            -- Update the timestamp but skip async processing
+            NEW.updated_at := NOW();
+            RETURN NEW;
+        END IF;
+    END IF;
+    
+    -- For new blocks or updates outside debounce window, call the main processing function
+    -- This delegates to the existing fn_notify_block_change() implementation
+    PERFORM public.fn_notify_block_change();
+    
+    -- Always return NEW to allow the operation to proceed
+    RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Log trigger attachment errors but don't fail the transaction
+        INSERT INTO public.async_processing_errors (
+            block_id,
+            error_message,
+            http_status_code,
+            response_body
+        ) VALUES (
+            COALESCE(NEW.id, OLD.id),
+            'Trigger attachment error in fn_block_content_changed: ' || SQLERRM,
+            NULL,
+            NULL
+        );
+        
+        -- Still return NEW to allow the operation to succeed
+        RETURN NEW;
+END;
+
+
+--- Function: fn_notify_block_change ---
+
+DECLARE
+    new_hash VARCHAR(64);
+    old_hash VARCHAR(64);
+    edge_function_url TEXT;
+    service_role_key TEXT;
+    workspace_id UUID;
+    payload JSONB;
+    response_id BIGINT;
+BEGIN
+    -- Compute hash of new content
+    new_hash := public.compute_content_hash(NEW.content);
+    
+    -- Get old hash if this is an UPDATE
+    IF TG_OP = 'UPDATE' THEN
+        old_hash := OLD.content_hash;
+    ELSE
+        old_hash := NULL;
+    END IF;
+    
+    -- Only proceed if content has changed meaningfully
+    -- (new hash differs from old hash, or this is a new block)
+    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (old_hash IS NULL OR new_hash != old_hash)) THEN
+        -- Update the content_hash column for future comparisons
+        NEW.content_hash := new_hash;
+        
+        -- Reset embedding_updated_at to trigger new embedding generation
+        NEW.embedding_updated_at := NULL;
+        
+        -- Get workspace ID for context (needed for Edge Function)
+        SELECT d.workspace_id INTO workspace_id
+        FROM public.documents d
+        WHERE d.id = NEW.document_id;
+        
+        -- Get Edge Function URL from environment configuration
+        -- First try app.edge_function_process_block_url setting, fallback to default
+        edge_function_url := current_setting('app.edge_function_process_block_url', TRUE);
+        IF edge_function_url IS NULL THEN
+            -- Fallback to default Supabase Edge Function URL pattern
+            edge_function_url := 'https://' || current_setting('app.supabase_project_ref', TRUE) || 
+                                '.supabase.co/functions/v1/process-block';
+        END IF;
+        
+        -- Get service role key for authentication
+        service_role_key := current_setting('app.service_role_key', TRUE);
+        
+        -- Only proceed if we have both URL and service key
+        IF edge_function_url IS NOT NULL AND service_role_key IS NOT NULL THEN
+            -- Build payload for Edge Function
+            payload := jsonb_build_object(
+                'block_id', NEW.id,
+                'document_id', NEW.document_id,
+                'workspace_id', workspace_id,
+                'content', NEW.content,
+                'type', NEW.type,
+                'content_hash', new_hash,
+                'triggered_at', NOW(),
+                'operation', TG_OP
+            );
+            
+            -- Make asynchronous HTTP POST request via pg_net
+            -- This doesn't block the user's transaction
+            SELECT net.http_post(
+                url := edge_function_url,
+                headers := jsonb_build_object(
+                    'Content-Type', 'application/json',
+                    'Authorization', 'Bearer ' || service_role_key,
+                    'apikey', service_role_key
+                ),
+                body := payload::text
+            ) INTO response_id;
+            
+            -- Log the async request (optional, for debugging)
+            -- INSERT INTO public.async_processing_log (block_id, request_id, status) 
+            -- VALUES (NEW.id, response_id, 'pending');
+            
+        ELSE
+            -- Log configuration error
+            INSERT INTO public.async_processing_errors (
+                block_id, 
+                error_message, 
+                http_status_code,
+                response_body
+            ) VALUES (
+                NEW.id,
+                'Missing Edge Function configuration: URL=' || COALESCE(edge_function_url, 'NULL') || 
+                ', ServiceKey=' || CASE WHEN service_role_key IS NULL THEN 'NULL' ELSE 'PRESENT' END,
+                NULL,
+                NULL
+            );
+        END IF;
+    END IF;
+    
+    -- Always return NEW to allow the update/insert to proceed
+    RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Log any unexpected errors but don't fail the transaction
+        -- This ensures user edits are saved even if async processing fails
+        INSERT INTO public.async_processing_errors (
+            block_id, 
+            error_message, 
+            http_status_code,
+            response_body
+        ) VALUES (
+            NEW.id,
+            'Trigger function error: ' || SQLERRM,
+            NULL,
+            NULL
+        );
+        
+        -- Still return NEW to allow the operation to succeed
+        RETURN NEW;
+END;
+
+
+--- Function: update_updated_at_column ---
+
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+
+
