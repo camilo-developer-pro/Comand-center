@@ -1,5 +1,122 @@
 # Project Log: Command Center ERP
 
+## 2026-01-26: V3.2 Phase 1: Recursive Foundation Complete ✅
+
+### Accomplishments
+- **Phase 1 Verification:** Successfully passed all 7 verification tests for Phase 1 deployment, confirming the recursive foundation is fully operational.
+- **HNSW Index Resolution:** Fixed pattern matching issue with parentheses in WHERE clause (`WHERE (embedding IS NOT NULL)` vs `WHERE embedding IS NOT NULL`), ensuring verification correctly identifies partial HNSW index.
+- **Diagnostic Tooling:** Created comprehensive diagnostic tools (`diagnose_phase1_failure_v2.sql`) to identify failing tests when verification reports issues.
+- **Pattern Matching Flexibility:** Updated verification to accept both `WHERE embedding IS NOT NULL` and `WHERE (embedding IS NOT NULL)` patterns for robust index validation.
+- **Documentation Updates:** Updated `.cursorrules`, `PROJECT_STRUCTURE.md`, and `version_3.2.md` to reflect Phase 1 completion status.
+
+### Technical Highlights
+- **7-Test Verification Suite:** Validates blocks_v3 table, block_type ENUM, HNSW embedding index (partial), Path GIST index, RLS policies, fi_generate_key_between() function, and blocks_path_sync trigger.
+- **HNSW Index Configuration:** Partial index correctly excludes NULL embeddings with parentheses in WHERE clause, optimized for vector similarity search.
+- **Flexible Pattern Matching:** Verification uses `LIKE` with OR conditions to handle PostgreSQL index definition variations.
+- **Diagnostic Intelligence:** Diagnostic tool returns detailed test-by-test results as query tables for easy troubleshooting.
+- **Phase Completion:** All Phase 1 components verified and ready for Phase 2 (Atomic Editor & Layout).
+
+### Verification Tests Passed
+1. ✅ Test 1: blocks_v3 table exists
+2. ✅ Test 2: block_type ENUM with correct values
+3. ✅ Test 3: HNSW embedding index exists (partial) - now correctly recognized
+4. ✅ Test 4: Path GIST index exists
+5. ✅ Test 5: RLS enabled on blocks_v3
+6. ✅ Test 6: fi_generate_key_between() exists
+7. ✅ Test 7: blocks_path_sync trigger attached
+
+### Files Created/Modified
+- `database/migrations/v3.2/099_verify_phase1.sql` (updated with flexible pattern matching)
+- `database/migrations/v3.2/diagnose_phase1_failure_v2.sql` (diagnostic tool)
+- `database/migrations/v3.2/fix_hnsw_index_direct.sql` (index fix script)
+- `.cursorrules` (updated status)
+- `PROJECT_STRUCTURE.md` (updated structure and status)
+- `version_3.2.md` (updated phase completion)
+
+**V3.2 Phase 1 Complete: Recursive Foundation with Next.js 15 Migration fully verified and ready for production!** 🏗️
+
+---
+
+## 2026-01-26: SOP-005: Kysely Type Generation & Block Queries Implementation Complete ✅
+
+### Accomplishments
+- **Kysely Type Generation:** Successfully ran `npm run db:generate` to update `src/lib/db/generated-types.ts` with the new `blocks_v3` table schema, ensuring type-safe database operations.
+- **V3.2 Block Query Functions:** Implemented comprehensive TypeScript query functions in `src/lib/db/queries/blocks.ts` for the `blocks_v3` table with proper ltree and fractional indexing support.
+- **Type-Safe Operations:** Created query functions with strict TypeScript typing using Kysely's `SelectableTable`, `InsertableTable` types and Zod schema validation.
+- **Hierarchical Query Support:** Implemented efficient ltree-based subtree queries using PostgreSQL `<@` operator for ancestor/descendant relationships.
+- **Fractional Indexing Integration:** Added `reorderBlock` function that calls PostgreSQL `fi_generate_key_between()` for zero-latency reordering operations.
+- **Automatic Path Handling:** Properly integrated with database triggers by providing placeholder path values that are automatically computed by `blocks_path_trigger_fn()`.
+
+### Technical Highlights
+- **Type-Safe Database Layer:** Leveraged Kysely's generated types for compile-time validation of all database operations.
+- **Ltree Query Optimization:** Implemented `getBlockTree` function using `path <@ (SELECT path ...)` for efficient subtree retrieval in O(1) time.
+- **Fractional Indexing:** Integrated with existing `fi_generate_key_between()` PostgreSQL function for deterministic ordering between any two sort keys.
+- **UUIDv7 Generation:** Automatic UUIDv7 generation for new blocks using `generateUUIDv7()` utility function.
+- **Workspace Isolation:** All query functions include workspace validation for multi-tenant security.
+- **Trigger Integration:** Proper handling of `path` column which is computed by database trigger on INSERT/UPDATE.
+
+### Query Functions Implemented
+1. **`getBlocksByParent`** - Fetch blocks by parent for sidebar navigation
+2. **`getBlockTree`** - Recursive subtree queries using ltree operators
+3. **`insertBlock`** - Create new blocks with UUIDv7 and automatic path computation
+4. **`updateBlockContent`** - Update block content with automatic `updated_at` timestamp
+5. **`reorderBlock`** - Reorder blocks using fractional indexing RPC
+6. **`deleteBlock`** - Delete blocks with cascade handling
+7. **`getBlocksByWorkspace`** - Admin/analytics workspace block queries
+8. **`searchBlocksByText`** - Full-text search on block content
+9. **`updateBlockParent`** - Drag-and-drop parent changes
+10. **`getBlockById`** - Single block retrieval with workspace validation
+
+### Legacy Compatibility
+- Maintained backward compatibility with legacy `blocks` table functions (`getBlocksByDocumentId`, `insertBlockLegacy`, etc.)
+- Clear deprecation annotations for migration path from old `blocks` to new `blocks_v3` table
+
+### Files Created/Modified
+- `src/lib/db/generated-types.ts` (updated via `npm run db:generate`)
+- `src/lib/db/queries/blocks.ts` (completely rewritten for V3.2)
+- `package.json` (db:generate script already configured)
+
+**SOP-005 Complete: Type-safe Kysely query layer for V3.2 blocks with ltree hierarchy and fractional indexing fully operational!** 🗃️
+
+---
+
+## 2026-01-25: V3.2 Blocks Schema, Path Triggers, and RLS Implementation Complete ✅
+
+### Accomplishments
+- **V3.2 Blocks Schema Migration:** Created comprehensive `blocks_v3` table with UUIDv7 primary keys, ltree path hierarchy, fractional indexing, and OpenAI embedding support.
+- **Automatic Path Synchronization:** Implemented `blocks_path_trigger_fn()` trigger function with `uuid_to_ltree_label()` helper to maintain hierarchical ltree paths automatically on INSERT/UPDATE.
+- **Row-Level Security (RLS):** Deployed multi-tenant isolation with `is_workspace_member()` helper function and comprehensive SELECT/INSERT/UPDATE/DELETE policies.
+- **TypeScript Zod Schemas:** Created robust validation schemas for block operations with strict UUID validation, ltree path handling, and computed field protection.
+- **Performance Optimization:** Added composite index `idx_workspace_members_lookup` for efficient membership checks.
+- **Comprehensive Testing:** Implemented Zod schema validation tests and database verification script for end-to-end validation.
+
+### Technical Highlights
+- **Dual-Path Hierarchy:** Combined `parent_id` (simple parent lookup) with `path` ltree column (efficient ancestor/descendant queries using `@>`, `<@` operators).
+- **Automatic Path Maintenance:** Trigger ensures path stays synchronized with parent relationships, enabling efficient hierarchical queries without manual updates.
+- **Security-First Design:** RLS policies prevent cross-workspace data access and impersonation (INSERT requires `user_id = auth.uid()`).
+- **Type Safety:** Zod schemas enforce strict validation at runtime with custom UUID validation, ltree path regex, and computed field protection.
+- **Database Verification:** Created comprehensive SQL verification script to validate schema, triggers, functions, and RLS policies.
+
+### Schema Design
+- **UUIDv7 Primary Keys:** Time-sortable identifiers for efficient B-tree indexing
+- **ltree Path Column:** Format: `{workspace_uuid_no_hyphens}.{block_uuid_no_hyphens}` for root blocks, appending child UUIDs for nested blocks
+- **Fractional Indexing:** `sort_order` with COLLATE "C" for zero-latency reordering
+- **OpenAI Embeddings:** `embedding vector(1536)` for semantic search capabilities
+- **TipTap Content:** Flexible JSONB storage for rich editor content
+
+### Files Created/Modified
+- `database/migrations/v3.2/001_blocks_schema.sql`
+- `database/migrations/v3.2/002_blocks_path_trigger.sql`
+- `database/migrations/v3.2/003_blocks_rls.sql`
+- `database/migrations/v3.2/verify_v3_2_blocks.sql`
+- `src/lib/schemas/block.schema.ts`
+- `src/lib/schemas/index.ts`
+- `scripts/test-block-schemas.ts`
+
+**V3.2 Blocks Foundation Complete: Secure, hierarchical block storage with automatic path synchronization and multi-tenant isolation ready for production!** 🏗️
+
+---
+
 ## 2026-01-25: V3.1 Full System Implementation Complete 🏁
 
 ### Accomplishments

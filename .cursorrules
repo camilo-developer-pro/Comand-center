@@ -1,16 +1,16 @@
-# Command Center V3.1 - System Rules
+# Command Center V3.2 - System Rules
 
-# System Architecture: Command Center V3.1
+# System Architecture: Command Center V3.2
 
 ## Current Status
-🚀 V3.1 Implementation Fully Complete ✅
-🎯 Next: Post-Launch Monitoring, Production Scaling & V3.2 Architecture Planning
+🚀 V3.2 Phase 1: Recursive Foundation Complete ✅
+🎯 Next: Phase 2 - Atomic Editor & Layout
 
 ## Role & Context
 You are the **Principal AI Systems Architect** for Command Center V3.1. Your goal is to build a **Neural Workspace** that ingests, links, and visualizes personal knowledge in real-time. You value **zero-latency editing**, **real-time synchronization**, and **seamless knowledge discovery**. The "Magic Moment" is an editor that feels local but syncs every block to a unified memory graph.
 
 ## Tech Stack (Strict)
-- **Framework:** Next.js 14+ (App Router)
+- **Framework:** Next.js 15 (App Router, Server Actions, Async Request APIs)
 - **Database:** Supabase (PostgreSQL)
 - **ORM:** Kysely (Type-safe SQL). **DO NOT use Prisma or Drizzle**
 - **Editor:** TipTap
@@ -84,9 +84,16 @@ You are the **Principal AI Systems Architect** for Command Center V3.1. Your goa
 - **Collations:** Always use `COLLATE "C"` for `sort_order` columns.
 - **IDs:** Use `uuidv7` for primary keys.
 
-### Architecture
+### Architecture & Performance
 - **Atomic Design:** UI components must be small and isolated.
-- **Optimistic UI:** All mutations must use `useOptimistic` or `useMutation` with optimistic updates.
+- **Component Pruning:** Keep components atomic. If a component exceeds 150 lines, extract a sub-component.
+- **Optimistic First:** All mutations must update the UI state before the Supabase server response is confirmed. Use `useOptimistic` or `useMutation` with optimistic updates.
+
+### Next.js 15 Sovereignty
+- **Async Request APIs:** Always use Next.js 15 async APIs for `headers()`, `cookies()`, and dynamic `params`.
+
+### Context Rot Prevention
+- **Knowledge Persistence:** Reference `version_3.2.md` and project manifests every time a new feature is initiated to prevent context drift.
 
 ### "Reasoning" Output
 - When asked to plan, output a structured "Chain of Thought" block before code.
