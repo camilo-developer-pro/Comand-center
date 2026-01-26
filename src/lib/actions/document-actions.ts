@@ -43,6 +43,16 @@ type CreateDocumentInput = z.infer<typeof createDocumentSchema>;
 type UpdateDocumentInput = z.infer<typeof updateDocumentSchema>;
 type MoveDocumentInput = z.infer<typeof moveDocumentSchema>;
 
+export interface DocumentTreeNode {
+  id: string;
+  title: string;
+  icon: string | null;
+  parentId: string | null;
+  path: string; // ltree path
+  hasChildren: boolean;
+  depth: number; // Calculated from ltree nlevel()
+}
+
 // ============================================================================
 // ACTIONS
 // ============================================================================
@@ -358,40 +368,60 @@ export async function moveDocument(
  */
 export async function getDocumentTree(
     workspaceId: string
-): Promise<ActionResult<Array<{
-    id: string;
-    title: string;
-    parentId: string | null;
-    path: string;
-    isFolder: boolean;
-}>>> {
+): Promise<ActionResult<DocumentTreeNode[]>> {
     try {
         const supabase = await createServerSupabaseClient();
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-            return failure('Unauthorized', 'UNAUTHORIZED');
+            return failure('You must be logged in', 'UNAUTHORIZED');
         }
         
-        // Use Kysely for better type safety and ordering
+        // Check workspace membership using database function
+        const { data: isMember, error: membershipError } = await supabase.rpc('is_workspace_member', {
+            workspace_id_param: workspaceId,
+            user_id_param: user.id
+        });
+        
+        if (membershipError) {
+            console.error('Workspace membership check error:', membershipError);
+            return failure('Failed to verify workspace access', 'DATABASE_ERROR');
+        }
+        
+        if (!isMember) {
+            return failure('You do not have access to this workspace', 'FORBIDDEN');
+        }
+        
+        // Use Kysely for type-safe SQL with ltree operations
         const documents = await db
             .selectFrom('documents')
-            .select(['id', 'title', 'parent_id', 'path', 'is_template'])
+            .select([
+                'id',
+                'title',
+                'icon',
+                'parent_id',
+                'path',
+                sql<number>`nlevel(path)`.as('depth'),
+            ])
             .where('workspace_id', '=', workspaceId)
             .where('is_archived', '=', false)
-            .orderBy(sql`nlevel(path)`, 'asc')
-            .orderBy('title', 'asc')
+            .orderBy(sql`path`) // ltree natural ordering ensures parent-before-child
             .execute();
         
-        return success(
-            documents.map((d) => ({
-                id: d.id,
-                title: d.title,
-                parentId: d.parent_id,
-                path: d.path,
-                isFolder: d.is_template, // Using is_template as folder indicator
-            }))
-        );
+        // Compute hasChildren by checking if any document's parent_id matches each document's id
+        const parentIds = new Set(documents.map(d => d.parent_id).filter(Boolean));
+        
+        const result: DocumentTreeNode[] = documents.map(doc => ({
+            id: doc.id,
+            title: doc.title,
+            icon: doc.icon,
+            parentId: doc.parent_id,
+            path: doc.path,
+            hasChildren: parentIds.has(doc.id),
+            depth: doc.depth - 1, // Subtract 1 because root is depth 1
+        }));
+        
+        return success(result);
     } catch (error) {
         console.error('Get document tree error:', error);
         return failure('Failed to fetch document tree', 'DATABASE_ERROR');

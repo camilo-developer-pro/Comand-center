@@ -59,3 +59,31 @@ export async function createServiceRoleClient() {
     }
   );
 }
+
+/**
+ * Creates a Supabase client with workspace context for easier block queries
+ * @param workspaceId The workspace ID to scope queries to
+ * @returns An object with the Supabase client and workspace-scoped helper methods
+ */
+export async function createServerSupabaseClientWithWorkspace(workspaceId: string) {
+  const client = await createServerSupabaseClient();
+  
+  return {
+    client,
+    workspaceId,
+    async getBlocks(parentId: string | null) {
+      const query = client
+        .from('blocks_v3')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('sort_order', { ascending: true });
+      
+      // Handle parent_id filter correctly for both null and string values
+      if (parentId === null) {
+        return query.is('parent_id', null);
+      } else {
+        return query.eq('parent_id', parentId);
+      }
+    },
+  };
+}

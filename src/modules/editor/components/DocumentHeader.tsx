@@ -1,25 +1,41 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { PresenceAvatarStack } from './PresenceAvatarStack';
 import { TypingIndicator } from './TypingIndicator';
 import type { UserPresence } from '@/lib/realtime/presence-types';
+import { cn } from '@/lib/utils/cn';
 
 interface DocumentHeaderProps {
-    title: string;
+    documentId: string;
+    initialTitle: string;
     onTitleChange?: (title: string) => void;
-    otherUsers: UserPresence[];
+    otherUsers?: UserPresence[];
     lastSaved?: Date | null;
     isSaving?: boolean;
 }
 
 export const DocumentHeader = memo(function DocumentHeader({
-    title,
+    documentId,
+    initialTitle,
     onTitleChange,
-    otherUsers,
+    otherUsers = [],
     lastSaved,
     isSaving
 }: DocumentHeaderProps) {
+    const [title, setTitle] = useState(initialTitle);
+    
+    const handleBlur = useCallback(() => {
+        if (title !== initialTitle && onTitleChange) {
+            onTitleChange(title);
+        }
+    }, [title, initialTitle, onTitleChange]);
+    
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTitle = e.target.value;
+        setTitle(newTitle);
+    }, []);
+    
     return (
         <div className="sticky top-0 z-40 bg-background border-b">
             <div className="flex items-center justify-between px-4 py-3">
@@ -27,8 +43,12 @@ export const DocumentHeader = memo(function DocumentHeader({
                     <input
                         type="text"
                         value={title}
-                        onChange={(e) => onTitleChange?.(e.target.value)}
-                        className="text-xl font-semibold bg-transparent border-none outline-none w-full truncate focus:ring-0"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={cn(
+                            'text-xl font-semibold bg-transparent border-none outline-none w-full truncate focus:ring-0',
+                            'placeholder:text-muted-foreground/50'
+                        )}
                         placeholder="Untitled"
                     />
                     <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">

@@ -4,6 +4,7 @@
  * V1.1 Phase 4: Lazy Hydration
  * V3.1 Phase 5: Atomic Block Extraction
  * V3.1 Phase 5: Optimistic UI Patterns
+ * V3.2 Phase 2: Focus Management System
  */
 
 export {
@@ -32,3 +33,11 @@ export {
     type UseBlockSyncOptions,
     type UseBlockSyncResult,
 } from './useBlockSync';
+
+export {
+    FocusManagerProvider,
+    useFocusManager,
+    getFocusClasses,
+    getLeftBorderIndicatorStyles,
+    type FocusManagerContextValue,
+} from './useFocusManager';

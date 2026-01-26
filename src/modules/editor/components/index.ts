@@ -3,6 +3,7 @@
  *
  * V1.1 Phase 3: Widget Insertion UX
  * V3.1 Phase 5: Optimistic UI Patterns
+ * V3.2 Phase 2: Atomic Editor & Layout
  */
 
 // Error handling
@@ -33,6 +34,12 @@ export { Editor } from './Editor';
 export { AtomicIngestionEditor } from './AtomicIngestionEditor';
 export { CommandCenterEditor } from './CommandCenterEditor';
 export { DocumentEditor } from './DocumentEditor';
+
+// V3.2 Phase 2: Atomic Block Architecture
+export { BlockRenderer } from './BlockRenderer';
+export { AtomicBlock } from './AtomicBlock';
+export { TipTapAtomicEditor } from './TipTapAtomicEditor';
+export type { Block } from '../hooks/useDocumentBlocks';
 
 // Drag-and-drop reordering
 export { SortableBlockWrapper } from './SortableBlockWrapper';

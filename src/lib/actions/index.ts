@@ -19,7 +19,10 @@ export {
     updateDocument,
     moveDocument,
     deleteDocument,
+    getDocumentTree,
 } from './document-actions';
+
+export type { DocumentTreeNode } from './document-actions';
 
 // Block actions
 export {
